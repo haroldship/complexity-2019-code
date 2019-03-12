@@ -1,0 +1,5 @@
+*.csv
+*.jpeg
+*.pdf
+.RData
+.Rhistory
