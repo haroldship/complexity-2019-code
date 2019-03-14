@@ -1,29 +1,28 @@
 rm(list=ls())
 
-pars <- c('alpha1','g12','beta1','h11', 'h13',
-          'alpha2','g21','g23', 'g24', 'beta2','h22')
-vars <- paste0('x', 1:4)
-eq1 <- 'alpha1*(x2^g12)-beta1*(x1^h11)*(x3^h13)'
-eq2 <- 'alpha2*(x1^g21)*(x3^g23)*(x4^g24)-beta2*(x2^h22)'
-eq3 <- '0'
-eq4 <- '0'
-equations <- c(eq1,eq2,eq3,eq4)
+pars <- c('beta1_1','beta1_2','beta2_1','beta2_2','gamma')
+vars <- c('S1_1','I1_1','S2_1','I2_1')
+S1_1 <- '-S1_1*(beta1_1*I1_1+beta1_2*I2_1)'
+I1_1 <- 'S1_1*(beta1_1*I1_1+beta1_2*I2_1)-gamma*I1_1'
+S2_1 <- '-S2_1*(beta2_1*I1_1+beta2_2*I2_1)'
+I2_1 <- 'S2_1*(beta2_1*I1_1+beta2_2*I2_1)-gamma*I2_1'
+equations <- c(S1_1,I1_1,S2_1,I2_1)
 names(equations) <- vars
-theta <- c(2,1,1.2,0.5,-1,2,0.1,-1,0.5,-2,1)
+theta <- c(6,2,1,3,2.333333)
 names(theta) <- pars
-x0 <- c(2,0.1,0.5,1)
+x0 <- c(0.56,1e-4,0.57,1e-4)
 names(x0) <- vars
 library("simode")
 #sigma <- 0.05 compNLStoSLS1
 sigma <- 0.05 
 priorInf=c(0.1,1,3,5)
 
-
-n <- 50
-time <- seq(0,10,length.out=n)
+n <- 18
+time <- 1:n
 model_out <- solve_ode(equations,theta,x0,time)
+plot(model_out)
 x_det <- model_out[,vars]
-lin_pars <- c('alpha1','beta1','alpha2','beta2')
+lin_pars <- c('beta1_1','beta1_2','beta2_1','beta2_2','gamma')
 nlin_pars <- setdiff(pars,lin_pars)
 
 N <- 50
@@ -83,3 +82,14 @@ for(ip in 1:4){
 }
 #plot(unlist(NLSmc_im_loss_vals),type='l')
 #lines(unlist(SLSmc_im_loss_vals),col="red")
+
+obs <- list()
+for(i in 1:length(vars)) {
+  obs[[i]] <- x_det[,i] + rnorm(n,0,sigma)
+}
+names(obs) <- vars
+plot(time, unlist(obs[1]), ylab=NULL, main="S1_1")
+plot(time, unlist(obs[2]), ylab=NULL, main="I1_1")
+plot(time, unlist(obs[3]), ylab=NULL, main="S2_1")
+plot(time, unlist(obs[4]), ylab=NULL, main="I2_1")
+

@@ -1,12 +1,12 @@
 rm(list=ls())
 library(latex2exp)
 library(ggplot2)
-d10 <- read.csv("1-NLStoSLSloss.csv")
-d20 <- read.csv("2-NLStoSLSloss.csv")
+d1 <- read.csv("1-NLStoSLSloss.csv")
+d2 <- read.csv("2-NLStoSLSloss.csv")
 d3 <- read.csv("3-NLStoSLSloss.csv")
 d4 <- read.csv("4-NLStoSLSloss.csv")
-d1=d10[1:49,]
-d2=d20[1:49,]
+#d1=d10[1:49,]
+#d2=d20[1:49,]
 
 dAll<-data.frame(NLS1=d1$NLSmc,SLS1=d1$SLSmc,
                  NLS2=d2$NLSmc,SLS2=d2$SLSmc,
@@ -36,8 +36,8 @@ line <- "#1F3552"
 ggplot(Allbox, aes(x = alllabel, y = LS ,color = Method)) +
   geom_boxplot() +
   scale_y_continuous(name = "Integral matching loss function",
-                     breaks = seq(0, 14, 5),
-                     limits=c(0, 14)) +
+                     breaks = seq(0, 2, 0.2),
+                     limits=c(0, 2)) +
   scale_x_discrete(name = "Quality of prior information",
         labels=c("NLS1"="High","SLS1"="High",
                  "NLS2"="","SLS2"="",
