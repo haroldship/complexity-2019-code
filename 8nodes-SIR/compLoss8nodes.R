@@ -36,8 +36,8 @@ line <- "#1F3552"
 ggplot(Allbox, aes(x = alllabel, y = LS ,color = Method)) +
   geom_boxplot() +
   scale_y_continuous(name = "Integral matching loss function",
-                     breaks = seq(0, 2, 0.2),
-                     limits=c(0, 2)) +
+                     breaks = seq(0, 0.15, 0.05),
+                     limits=c(0, 0.15)) +
   scale_x_discrete(name = "Quality of prior information",
         labels=c("NLS1"="High","SLS1"="High",
                  "NLS2"="","SLS2"="",

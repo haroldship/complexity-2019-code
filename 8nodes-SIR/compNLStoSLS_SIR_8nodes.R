@@ -14,7 +14,7 @@ x0 <- c(0.56,1e-4,0.57,1e-4)
 names(x0) <- vars
 library("simode")
 #sigma <- 0.05 compNLStoSLS1
-sigma <- 0.05 
+sigma <- c(0.05, 0.0005, 0.05, 0.0005)
 priorInf=c(0.1,1,3,5)
 
 n <- 18
@@ -40,7 +40,7 @@ for(ip in 1:4){
   # for(j in 1:N) {
     obs <- list()
     for(i in 1:length(vars)) {
-      obs[[i]] <- x_det[,i] + rnorm(n,0,sigma)
+      obs[[i]] <- x_det[,i] + rnorm(n,0,sigma[i])
     }
     names(obs) <- vars
   
@@ -85,11 +85,11 @@ for(ip in 1:4){
 
 obs <- list()
 for(i in 1:length(vars)) {
-  obs[[i]] <- x_det[,i] + rnorm(n,0,sigma)
+  obs[[i]] <- x_det[,i] + rnorm(n,0,sigma[i])
 }
 names(obs) <- vars
-plot(time, unlist(obs[1]), ylab=NULL, main="S1_1")
-plot(time, unlist(obs[2]), ylab=NULL, main="I1_1")
-plot(time, unlist(obs[3]), ylab=NULL, main="S2_1")
-plot(time, unlist(obs[4]), ylab=NULL, main="I2_1")
+plot(time, unlist(obs[1]), ylab="", main="S1_1")
+plot(time, unlist(obs[2]), ylab="", main="I1_1")
+plot(time, unlist(obs[3]), ylab="", main="S2_1")
+plot(time, unlist(obs[4]), ylab="", main="I2_1")
 
