@@ -1,19 +1,17 @@
 rm(list=ls())
 library(latex2exp)
 library(ggplot2)
-d10 <- read.csv("1-NLStoSLStime.csv")
-d20 <- read.csv("2-NLStoSLStime.csv")
-d30 <- read.csv("3-NLStoSLStime.csv")
-d40 <- read.csv("4-NLStoSLStime.csv")
-d1=d10[1:49,]
-d2=d20[1:49,]
-d3=d30[1:49,]
-d4=d40[1:49,]
+d1 <- read.csv("1-NLStoSLSloss.csv")
+d2 <- read.csv("2-NLStoSLSloss.csv")
+d3 <- read.csv("3-NLStoSLSloss.csv")
+d4 <- read.csv("4-NLStoSLSloss.csv")
+#d1=d10[1:49,]
+#d2=d20[1:49,]
 
-dAll<-data.frame(NLS1=d1$NLStime,SLS1=d1$SLStime,
-                 NLS2=d2$NLStime,SLS2=d2$SLStime,
-                 NLS3=d3$NLStime,SLS3=d3$SLStime,
-                 NLS4=d4$NLStime,SLS4=d4$SLStime)
+dAll<-data.frame(NLS1=d1$NLSmc,SLS1=d1$SLSmc,
+                 NLS2=d2$NLSmc,SLS2=d2$SLSmc,
+                 NLS3=d3$NLSmc,SLS3=d3$SLSmc,
+                 NLS4=d4$NLSmc,SLS4=d4$SLSmc)
 
 alllabel=c(rep("NLS1",length(dAll$NLS1)),rep("SLS1",length(dAll$SLS1)),
            rep("NLS2",length(dAll$NLS2)),rep("SLS2",length(dAll$SLS2)),
@@ -37,9 +35,9 @@ fill <- "#4271AE"
 line <- "#1F3552"
 ggplot(Allbox, aes(x = alllabel, y = LS ,color = Method)) +
   geom_boxplot() +
-  scale_y_continuous(name = "Estimation time (sec)",
-                     breaks = seq(0, 1.5, 0.5),
-                     limits=c(0, 1.5)) +
+  scale_y_continuous(name = "Integral matching loss function",
+                     breaks = seq(0, 16, 2),
+                     limits=c(0, 16)) +
   scale_x_discrete(name = "Quality of prior information",
         labels=c("NLS1"="High","SLS1"="High",
                  "NLS2"="","SLS2"="",
@@ -49,3 +47,4 @@ ggplot(Allbox, aes(x = alllabel, y = LS ,color = Method)) +
     plot.title = element_text(hjust = 0.5,color="Blue", size=12, face="bold"),
     axis.title.x = element_text(color="blue", size=10, face="bold"),
     axis.title.y = element_text(color="blue", size=10, face="bold"))
+

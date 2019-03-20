@@ -23,8 +23,14 @@ I2_4 <- "S2_4*kappa4*(beta2_1*I1_4+beta2_2*I2_4)-gamma*I2_4"
 I1_5 <- "S1_5*kappa5*(beta1_1*I1_5+beta1_2*I2_5)-gamma*I1_5"
 I2_5 <- "S2_5*kappa5*(beta2_1*I1_5+beta2_2*I2_5)-gamma*I2_5"
 
+S0 <- c(0.56,0.57,0.49,0.45,0.56,0.32,0.56,0.47,0.47,0.41)
+Svars <- c("S1_1","S2_1","S1_2","S2_2","S1_3","S2_3","S1_4","S2_4","S1_5","S2_5")
+names(S0) <- Svars
+I0 <- c(1e-04,1e-04,1e-04,1e-04,1e-04,1e-04,1e-04,1e-04,1e-04,1e-04)
+Ivars <- c("I1_1","I2_1","I1_2","I2_2","I1_3","I2_3","I1_4","I2_4","I1_5","I2_5")
+names(I0) <- Ivars
 equations <- c(S1_1,S2_1,S1_2,S2_2,S1_3,S2_3,S1_4,S2_4,S1_5,S2_5,I1_1,I2_1,I1_2,I2_2,I1_3,I2_3,I1_4,I2_4,I1_5,I2_5)
-vars <- c("S1_1","S2_1","S1_2","S2_2","S1_3","S2_3","S1_4","S2_4","S1_5","S2_5","I1_1","I2_1","I1_2","I2_2","I1_3","I2_3","I1_4","I2_4","I1_5","I2_5")
+vars <- c(Svars,Ivars)
 names(equations) <- vars
 
 beta <- c(6,2,1,3)
@@ -38,19 +44,31 @@ pars <- names(theta)
 lin_pars <- c(names(beta), names(gamma))
 nlin_pars <- setdiff(pars, lin_pars)
 
+print(lin_pars)
+print(nlin_pars)
+
 n <- 18
 time <- 1:n
 
-S0 <- c(0.56,0.57,0.49,0.45,0.56,0.32,0.56,0.47,0.47,0.41)
-I0 <- c(1e-04,1e-04,1e-04,1e-04,1e-04,1e-04,1e-04,1e-04,1e-04,1e-04)
 x0 <- c(S0,I0)
 names(x0) <- vars
-sigma <- c(rep(0.05,n), rep(0.0005,n))
+sigma <- c(rep(0.05,length(Svars)), rep(0.001,length(Ivars)))
 priorInf=c(0.1,1,3,5)
 
 model_out <- solve_ode(equations,theta,x0,time)
 #plot(model_out)
 x_det <- model_out[,vars]
+
+obs <- list()
+for(i in 1:length(vars)) {
+  obs[[i]] <- x_det[,i] + rnorm(n,0,sigma[i])
+}
+names(obs) <- vars
+par(mfrow=c(2,2))
+plot(time, unlist(obs[1]), ylab="", main="S1_1")
+plot(time, unlist(obs[11]), ylab="", main="I1_1")
+plot(time, unlist(obs[5]), ylab="", main="S2_3")
+plot(time, unlist(obs[15]), ylab="", main="I2_3")
 
 N <- 50
 set.seed(1000)
@@ -76,12 +94,12 @@ for(ip in 1:4){
     names(nlin_init) <- nlin_pars
     
     ptimeNLS <- system.time({
-      NLSmc <- simode(equations=equations, pars=pars, fixed=c(x0,gamma,kappa), time=time, obs=obs,
+      NLSmc <- simode(equations=equations, pars=names(beta), fixed=c(x0,gamma,kappa), time=time, obs=obs,
                       nlin_pars=nlin_pars, start=nlin_init, 
                       im_method = "non-separable",
                       simode_ctrl=simode.control(optim_type = "im"))})
     ptimeSLS <- system.time({
-      SLSmc <- simode(equations=equations, pars=pars, fixed=c(x0,gamma,kappa), time=time, obs=obs,
+      SLSmc <- simode(equations=equations, pars=names(beta), fixed=c(x0,gamma,kappa), time=time, obs=obs,
                       nlin_pars=nlin_pars, start=nlin_init,
                       simode_ctrl=simode.control(optim_type = "im"))})
     
@@ -109,14 +127,4 @@ for(ip in 1:4){
 }
 #plot(unlist(NLSmc_im_loss_vals),type='l')
 #lines(unlist(SLSmc_im_loss_vals),col="red")
-
-obs <- list()
-for(i in 1:length(vars)) {
-  obs[[i]] <- x_det[,i] + rnorm(n,0,sigma[i])
-}
-names(obs) <- vars
-plot(time, unlist(obs[1]), ylab="", main="S1_1")
-plot(time, unlist(obs[19]), ylab="", main="I1_1")
-plot(time, unlist(obs[2]), ylab="", main="S2_1")
-plot(time, unlist(obs[20]), ylab="", main="I2_1")
 
