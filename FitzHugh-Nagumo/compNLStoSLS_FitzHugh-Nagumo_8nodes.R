@@ -20,7 +20,8 @@ time <- seq(0, 20, length.out=n)
 x0 <- c(-1, 1)
 names(x0) <- vars
 
-priorInf=c(0.1,1,3,5)
+#priorInf=c(0.1,1,3,5)
+priorInf=c(6,8,10,12)
 model_out <- solve_ode(equations,theta,x0,time)
 #plot(model_out)
 
@@ -77,7 +78,7 @@ require(doParallel)
 registerDoParallel(cores=8)
 
 args <- c('equations', 'pars', 'time', 'x0', 'theta',
-          'Svars', 'x_det', 'vars', 'sigma')
+          'vars', 'x_det', 'vars', 'sigma')
 
 for(ip in 1:4){
   
