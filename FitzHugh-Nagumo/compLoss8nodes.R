@@ -12,6 +12,23 @@ dAll<-data.frame(NLS1=d1$NLSmc,SLS1=d1$SLSmc,
                  NLS2=d2$NLSmc,SLS2=d2$SLSmc,
                  NLS3=d3$NLSmc,SLS3=d3$SLSmc,
                  NLS4=d4$NLSmc,SLS4=d4$SLSmc)
+NLS_Lin_var <- c(var(d1$NLSest_a)+var(d1$NLSest_b),
+                 var(d2$NLSest_a)+var(d2$NLSest_b),
+                 var(d3$NLSest_a)+var(d3$NLSest_b),
+                 var(d4$NLSest_a)+var(d4$NLSest_b))
+SLS_Lin_var <- c(var(d1$SLSest_a)+var(d1$SLSest_b),
+                 var(d2$SLSest_a)+var(d2$SLSest_b),
+                 var(d3$SLSest_a)+var(d3$SLSest_b),
+                 var(d4$SLSest_a)+var(d4$SLSest_b))
+NLS_Nlin_var <- c(var(d1$NLSest_c),var(d2$NLSest_c),var(d3$NLSest_c),var(d4$NLSest_c))
+SLS_Nlin_var <- c(var(d1$SLSest_c),var(d2$SLSest_c),var(d3$SLSest_c),var(d4$SLSest_c))
+
+dVar <- data.frame(PriorInf=c(2, 4, 8, 16),
+                   NLS_Lin_var,
+                   SLS_Lin_var,
+                   NLS_Nlin_var,
+                   SLS_Nlin_var)
+dVar
 
 alllabel=c(rep("NLS1",length(dAll$NLS1)),rep("SLS1",length(dAll$SLS1)),
            rep("NLS2",length(dAll$NLS2)),rep("SLS2",length(dAll$SLS2)),
@@ -36,8 +53,8 @@ line <- "#1F3552"
 ggplot(Allbox, aes(x = alllabel, y = LS ,color = Method)) +
   geom_boxplot() +
   scale_y_continuous(name = "Integral matching loss function",
-                     breaks = seq(0, 120, 20),
-                     limits=c(0, 120)) +
+                     breaks = seq(0, 700, 100),
+                     limits=c(0, 700)) +
   scale_x_discrete(name = "Quality of prior information",
         labels=c("NLS1"="High","SLS1"="High",
                  "NLS2"="","SLS2"="",

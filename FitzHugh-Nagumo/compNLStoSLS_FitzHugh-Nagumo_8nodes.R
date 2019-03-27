@@ -21,7 +21,7 @@ x0 <- c(-1, 1)
 names(x0) <- vars
 
 #priorInf=c(0.1,1,3,5)
-priorInf=c(6,8,10,12)
+priorInf=c(2, 4, 8, 16)
 model_out <- solve_ode(equations,theta,x0,time)
 #plot(model_out)
 
@@ -80,7 +80,7 @@ registerDoParallel(cores=8)
 args <- c('equations', 'pars', 'time', 'x0', 'theta',
           'vars', 'x_det', 'vars', 'sigma')
 
-for(ip in 1:4){
+for(ip in 1:length(priorInf)){
   
   results <- foreach(j=1:N, .packages='simode', .export=args) %dorng% {
     # for(j in 1:N) {
@@ -91,10 +91,10 @@ for(ip in 1:4){
     names(obs) <- vars
     
     nlin_init <- rnorm(length(theta[nlin_pars]),theta[nlin_pars],
-                       + priorInf[1]*theta[nlin_pars])
+                       + priorInf[ip]*theta[nlin_pars])
     names(nlin_init) <- nlin_pars
     nlin_init[names(sigma)] <- rnorm(1,sigma,
-                                     + priorInf[1]*sigma)
+                                     + priorInf[ip]*sigma)
     lower <- NULL
     lower[names(sigma)] <- 0
     
@@ -120,6 +120,8 @@ for(ip in 1:4){
   SLSmc_im_loss_vals <- sapply(results,function(x) x$SLSmc$im_loss)
   NLSmc_time=list()
   SLSmc_time=list()
+  NLS_im_vars=sapply(results,function(x) x$NLSmc$im_pars_est)
+  SLS_im_vars=sapply(results,function(x) x$SLSmc$im_pars_est)
   for (mc in 1:N){
     NLSmc_time[mc]<-  results[[mc]]$ptimeNLS[3]
     SLSmc_time[mc]<-  results[[mc]]$ptimeSLS[3]
@@ -128,8 +130,10 @@ for(ip in 1:4){
   #mean(unlist(SLSmc_im_loss_vals))
   #mean(unlist(NLSmc_time))
   #mean(unlist(SLSmc_time))
-  
-  loss_df=data.frame(NLSmc=unlist(NLSmc_im_loss_vals),SLSmc=unlist(SLSmc_im_loss_vals))
+
+  loss_df=data.frame(NLSmc=unlist(NLSmc_im_loss_vals),SLSmc=unlist(SLSmc_im_loss_vals),
+                     NLSest_a=NLS_im_vars['a',],NLSest_b=NLS_im_vars['b',],NLSest_c=NLS_im_vars['c',],
+                     SLSest_a=SLS_im_vars['a',],SLSest_b=SLS_im_vars['b',],SLSest_c=SLS_im_vars['c',])
   time_df=data.frame(NLStime=unlist(NLSmc_time),SLStime=unlist(SLSmc_time))
   write.csv(loss_df, file = paste0(ip, "-NLStoSLSloss.csv"))
   write.csv(time_df, file = paste0(ip, "-NLStoSLStime.csv"))
