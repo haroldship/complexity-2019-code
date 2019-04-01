@@ -23,12 +23,14 @@ SLS_Lin_var <- c(var(d1$SLSest_a)+var(d1$SLSest_b),
 NLS_Nlin_var <- c(var(d1$NLSest_c),var(d2$NLSest_c),var(d3$NLSest_c),var(d4$NLSest_c))
 SLS_Nlin_var <- c(var(d1$SLSest_c),var(d2$SLSest_c),var(d3$SLSest_c),var(d4$SLSest_c))
 
-dVar <- data.frame(PriorInf=c(2, 4, 8, 16),
-                   NLS_Lin_var,
-                   SLS_Lin_var,
-                   NLS_Nlin_var,
-                   SLS_Nlin_var)
-dVar
+LVar <- c(NLS_Lin_var, SLS_Lin_var)
+NVar <- c(NLS_Nlin_var, SLS_Nlin_var)
+PriorInf <- rep(c("1","2","3","4"), 2)
+Label <- c("NLS1", "NLS2", "NLS3", "NLS4", "SLS1", "SLS2", "SLS3", "SLS4")
+Method <- c(rep("NLS", 4),rep("SLS",4))
+
+DVar <- data.frame(Method, PriorInf, LVar, NVar)
+
 
 alllabel=c(rep("NLS1",length(dAll$NLS1)),rep("SLS1",length(dAll$SLS1)),
            rep("NLS2",length(dAll$NLS2)),rep("SLS2",length(dAll$SLS2)),
@@ -65,3 +67,15 @@ ggplot(Allbox, aes(x = alllabel, y = LS ,color = Method)) +
     axis.title.x = element_text(color="blue", size=10, face="bold"),
     axis.title.y = element_text(color="blue", size=10, face="bold"))
 
+
+ggplot(DVar, aes(x=PriorInf, y=LVar)) +
+  geom_col(aes(fill=Method), position=position_dodge()) +
+  scale_x_discrete(name="Quality of prior information", labels=c("1"="Low", "2"="", "3"="", "4"="High")) +
+  scale_y_continuous(name="Variance") +
+  ggtitle("Variance of Linear Parameters")
+
+ggplot(DVar, aes(x=PriorInf, y=NVar)) +
+  geom_col(aes(fill=Method), position=position_dodge()) +
+  scale_x_discrete(name="Quality of prior information", labels=c("1"="Low", "2"="", "3"="", "4"="High")) +
+  scale_y_continuous(name="Variance") +
+  ggtitle("Variance of Non-linear Parameters")
