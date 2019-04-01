@@ -8,10 +8,10 @@ d4 <- read.csv("4-NLStoSLSloss.csv")
 #d1=d10[1:49,]
 #d2=d20[1:49,]
 
-dAll<-data.frame(NLS1=d1$NLSmc,SLS1=d1$SLSmc,
-                 NLS2=d2$NLSmc,SLS2=d2$SLSmc,
-                 NLS3=d3$NLSmc,SLS3=d3$SLSmc,
-                 NLS4=d4$NLSmc,SLS4=d4$SLSmc)
+dAll<-data.frame(NLS1=d1$NLSsse,SLS1=d1$SLSsse,
+                 NLS2=d2$NLSsse,SLS2=d2$SLSsse,
+                 NLS3=d3$NLSsse,SLS3=d3$SLSsse,
+                 NLS4=d4$NLSsse,SLS4=d4$SLSsse)
 NLS_Lin_var <- c(var(d1$NLSest_a)+var(d1$NLSest_b),
                  var(d2$NLSest_a)+var(d2$NLSest_b),
                  var(d3$NLSest_a)+var(d3$NLSest_b),
@@ -53,8 +53,8 @@ line <- "#1F3552"
 ggplot(Allbox, aes(x = alllabel, y = LS ,color = Method)) +
   geom_boxplot() +
   scale_y_continuous(name = "Integral matching loss function",
-                     breaks = seq(0, 700, 100),
-                     limits=c(0, 700)) +
+                     breaks = seq(0, 250, 50),
+                     limits=c(0, 250)) +
   scale_x_discrete(name = "Quality of prior information",
         labels=c("NLS1"="High","SLS1"="High",
                  "NLS2"="","SLS2"="",

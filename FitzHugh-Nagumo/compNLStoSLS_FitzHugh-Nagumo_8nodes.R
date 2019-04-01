@@ -51,7 +51,7 @@ pars_fn_sigma <- c(pars, lik_pars)
 nlin_init <- rnorm(length(theta[nlin_pars]),theta[nlin_pars],
                    + priorInf[1]*theta[nlin_pars])
 names(nlin_init) <- nlin_pars
-nlin_init[names(sigma)] <- 0.3
+nlin_init[names(sigma)] <- 1.0
 lower <- NULL
 lower[names(sigma)] <- 0
 
@@ -61,15 +61,21 @@ estNS <- simode(equations=equations, pars=pars_fn_sigma, time=time, obs=obs,
               calc_nll=calc_nll_sig,
               im_method = "non-separable",
               simode_ctrl=simode.control(optim_type = "im"))
-summary(estNS)
+#summary(estNS)
+model_NS <- solve_ode(equations,estNS$im_pars_est,x0,time)
+sse_NS <- sum(obs$V - model_NS[,"V"])^2 + sum(obs$R - model_NS[,"R"])^2
 #plot(estNS, type='fit', pars_true=theta, mfrow=c(2,1), legend=TRUE)
 estS <- simode(equations=equations, pars=pars_fn_sigma, time=time, obs=obs,
               fixed=x0, nlin=nlin_pars, likelihood_pars=lik_pars,
               start=nlin_init, lower=lower,
               calc_nll=calc_nll_sig,
               simode_ctrl=simode.control(optim_type = "im"))
-summary(estS)
+model_S <- solve_ode(equations,estS$im_pars_est,x0,time)
+sse_S <- sum(obs$V - model_S[,"V"])^2 + sum(obs$R - model_S[,"R"])^2
+#summary(estS)
 #plot(estS, type='fit', pars_true=theta, mfrow=c(2,1), legend=TRUE)
+
+cat(paste0("**** Non-separable SSE:",sse_NS," Separable SSE:",sse_S," ****"))
 
 N <- 50
 set.seed(1000)
@@ -77,7 +83,7 @@ library(doRNG)
 require(doParallel)
 registerDoParallel(cores=8)
 
-args <- c('equations', 'pars', 'time', 'x0', 'theta',
+args <- c('equations', 'pars', 'time', 'x0', 'theta', 'obs',
           'vars', 'x_det', 'vars', 'sigma')
 
 for(ip in 1:length(priorInf)){
@@ -118,13 +124,19 @@ for(ip in 1:length(priorInf)){
   
   NLSmc_im_loss_vals <- sapply(results,function(x) x$NLSmc$im_loss)
   SLSmc_im_loss_vals <- sapply(results,function(x) x$SLSmc$im_loss)
-  NLSmc_time=list()
-  SLSmc_time=list()
   NLS_im_vars=sapply(results,function(x) x$NLSmc$im_pars_est)
   SLS_im_vars=sapply(results,function(x) x$SLSmc$im_pars_est)
+  NLSmc_time=list()
+  SLSmc_time=list()
+  NLSmc_sse=list()
+  SLSmc_sse=list()
   for (mc in 1:N){
     NLSmc_time[mc]<-  results[[mc]]$ptimeNLS[3]
     SLSmc_time[mc]<-  results[[mc]]$ptimeSLS[3]
+    model_S <- solve_ode(equations,results[[mc]]$SLSmc$im_pars_est,x0,time)
+    SLSmc_sse[mc] <- sum(obs$V - model_S[,"V"])^2 + sum(obs$R - model_S[,"R"])^2
+    model_NS <- solve_ode(equations,results[[mc]]$NLSmc$im_pars_est,x0,time)
+    NLSmc_sse[mc] <- sum(obs$V - model_NS[,"V"])^2 + sum(obs$R - model_NS[,"R"])^2
   }
   #mean(unlist(NLSmc_im_loss_vals))
   #mean(unlist(SLSmc_im_loss_vals))
@@ -132,6 +144,7 @@ for(ip in 1:length(priorInf)){
   #mean(unlist(SLSmc_time))
 
   loss_df=data.frame(NLSmc=unlist(NLSmc_im_loss_vals),SLSmc=unlist(SLSmc_im_loss_vals),
+                     NLSsse=unlist(NLSmc_sse),SLSsse=unlist(SLSmc_sse),
                      NLSest_a=NLS_im_vars['a',],NLSest_b=NLS_im_vars['b',],NLSest_c=NLS_im_vars['c',],
                      SLSest_a=SLS_im_vars['a',],SLSest_b=SLS_im_vars['b',],SLSest_c=SLS_im_vars['c',])
   time_df=data.frame(NLStime=unlist(NLSmc_time),SLStime=unlist(SLSmc_time))
