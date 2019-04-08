@@ -23,15 +23,6 @@ SLS_Lin_var <- c(var(d1$SLSest_a)+var(d1$SLSest_b),
 NLS_Nlin_var <- c(var(d1$NLSest_c),var(d2$NLSest_c),var(d3$NLSest_c),var(d4$NLSest_c))
 SLS_Nlin_var <- c(var(d1$SLSest_c),var(d2$SLSest_c),var(d3$SLSest_c),var(d4$SLSest_c))
 
-LVar <- c(NLS_Lin_var, SLS_Lin_var)
-NVar <- c(NLS_Nlin_var, SLS_Nlin_var)
-PriorInf <- rep(c("1","2","3","4"), 2)
-Label <- c("NLS1", "NLS2", "NLS3", "NLS4", "SLS1", "SLS2", "SLS3", "SLS4")
-Method <- c(rep("NLS", 4),rep("SLS",4))
-
-DVar <- data.frame(Method, PriorInf, LVar, NVar)
-
-
 alllabel=c(rep("NLS1",length(dAll$NLS1)),rep("SLS1",length(dAll$SLS1)),
            rep("NLS2",length(dAll$NLS2)),rep("SLS2",length(dAll$SLS2)),
            rep("NLS3",length(dAll$NLS3)),rep("SLS3",length(dAll$SLS3)),
@@ -49,6 +40,16 @@ LS=c(dAll$NLS1,dAll$SLS1,
      
 Allbox=data.frame(alllabel,Method,LS)
 
+# DVar is a dataframe for showing the variance of the parameter estimates
+LVar <- c(NLS_Lin_var, SLS_Lin_var)
+NVar <- c(NLS_Nlin_var, SLS_Nlin_var)
+PriorInf <- rep(c("1","2","3","4"), 2)
+Method <- c(rep("NLS", 4),rep("SLS",4))
+DVar <- data.frame(Method, PriorInf, LVar, NVar)
+
+VarRatio <- c(SLS_Lin_var / NLS_Lin_var, SLS_Nlin_var / NLS_Nlin_var)
+Linearity <- factor(c(rep("Linear", 4), rep("Non-linear", 4)))
+DFVar <- data.frame(PriorInf, Linearity, VarRatio)
 
 fill <- "#4271AE"
 line <- "#1F3552"
@@ -79,3 +80,12 @@ ggplot(DVar, aes(x=PriorInf, y=NVar)) +
   scale_x_discrete(name="Quality of prior information", labels=c("1"="Low", "2"="", "3"="", "4"="High")) +
   scale_y_continuous(name="Variance") +
   ggtitle("Variance of Non-linear Parameters")
+
+ggplot(DFVar, aes(x=PriorInf)) +
+  geom_point(aes(y=VarRatio, colour=Linearity, shape=Linearity), size=4) +
+  scale_colour_discrete(name="Parameter set") +
+  scale_shape_discrete(name="Parameter set") +
+  scale_x_discrete(name="Quality of prior information", labels=c("1"="Low", "2"="", "3"="", "4"="High")) +
+  scale_y_continuous(name=expression(Variance~Ratio~SLS/NLS), limits=c(0,NA)) +
+  ggtitle("Ratio of variance of parameter estimates for FitzHugh-Nagumo model") +
+  theme(plot.title = element_text(hjust = 0.5))
