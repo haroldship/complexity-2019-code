@@ -136,6 +136,8 @@ for(ip in 1:4){
   
   NLSmc_im_loss_vals <- sapply(results,function(x) x$NLSmc$im_loss)
   SLSmc_im_loss_vals <- sapply(results,function(x) x$SLSmc$im_loss)
+  NLS_im_vars=sapply(results,function(x) x$NLSmc$im_pars_est)
+  SLS_im_vars=sapply(results,function(x) x$SLSmc$im_pars_est)
   NLSmc_time=list()
   SLSmc_time=list()
   for (mc in 1:N){
@@ -147,7 +149,22 @@ for(ip in 1:4){
   #mean(unlist(NLSmc_time))
   #mean(unlist(SLSmc_time))
   
-  loss_df=data.frame(NLSmc=unlist(NLSmc_im_loss_vals),SLSmc=unlist(SLSmc_im_loss_vals))
+  loss_df=data.frame(NLSmc=unlist(NLSmc_im_loss_vals),SLSmc=unlist(SLSmc_im_loss_vals),
+                     NLSest_beta1_1=NLS_im_vars['beta1_1',],NLSest_beta1_2=NLS_im_vars['beta1_2',],
+                     NLSest_beta2_1=NLS_im_vars['beta2_1',],NLSest_beta2_2=NLS_im_vars['beta2_2',],
+                     NLSest_S1_1=NLS_im_vars['S1_1',],NLSest_S2_1=NLS_im_vars['S2_1',],
+                     NLSest_S1_2=NLS_im_vars['S1_2',],NLSest_S2_2=NLS_im_vars['S2_2',],
+                     NLSest_S1_3=NLS_im_vars['S1_3',],NLSest_S2_3=NLS_im_vars['S2_3',],
+                     NLSest_S1_4=NLS_im_vars['S1_4',],NLSest_S2_4=NLS_im_vars['S2_4',],
+                     NLSest_S1_5=NLS_im_vars['S1_5',],NLSest_S2_5=NLS_im_vars['S2_5',],
+                     SLSest_beta1_1=NLS_im_vars['beta1_1',],SLSest_beta1_2=NLS_im_vars['beta1_2',],
+                     SLSest_beta2_1=NLS_im_vars['beta2_1',],SLSest_beta2_2=NLS_im_vars['beta2_2',],
+                     SLSest_S1_1=NLS_im_vars['S1_1',],SLSest_S2_1=NLS_im_vars['S2_1',],
+                     SLSest_S1_2=NLS_im_vars['S1_2',],SLSest_S2_2=NLS_im_vars['S2_2',],
+                     SLSest_S1_3=NLS_im_vars['S1_3',],SLSest_S2_3=NLS_im_vars['S2_3',],
+                     SLSest_S1_4=NLS_im_vars['S1_4',],SLSest_S2_4=NLS_im_vars['S2_4',],
+                     SLSest_S1_5=NLS_im_vars['S1_5',],SLSest_S2_5=NLS_im_vars['S2_5',]
+  )
   time_df=data.frame(NLStime=unlist(NLSmc_time),SLStime=unlist(SLSmc_time))
   write.csv(loss_df, file = paste0(ip, "-NLStoSLSloss.csv"))
   write.csv(time_df, file = paste0(ip, "-NLStoSLStime.csv"))
