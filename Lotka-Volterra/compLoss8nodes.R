@@ -1,12 +1,10 @@
 rm(list=ls())
 library(latex2exp)
 library(ggplot2)
-d10 <- read.csv("1-NLStoSLSloss.csv")
-d20 <- read.csv("2-NLStoSLSloss.csv")
+d1 <- read.csv("1-NLStoSLSloss.csv")
+d2 <- read.csv("2-NLStoSLSloss.csv")
 d3 <- read.csv("3-NLStoSLSloss.csv")
 d4 <- read.csv("4-NLStoSLSloss.csv")
-d1=d10[1:49,]
-d2=d20[1:49,]
 
 dAll<-data.frame(NLS1=d1$NLSmc,SLS1=d1$SLSmc,
                  NLS2=d2$NLSmc,SLS2=d2$SLSmc,
@@ -48,3 +46,24 @@ ggplot(Allbox, aes(x = alllabel, y = LS ,color = Method)) +
     axis.title.x = element_text(color="blue", size=10, face="bold"),
     axis.title.y = element_text(color="blue", size=10, face="bold"))
 
+NLS_Lin_var <- c(var(d1$NLSest_alpha)+var(d1$NLSest_beta)+var(d1$NLSest_gamma)+var(d1$NLSest_delta),
+                 var(d2$NLSest_alpha)+var(d2$NLSest_beta)+var(d2$NLSest_gamma)+var(d2$NLSest_delta),
+                 var(d3$NLSest_alpha)+var(d3$NLSest_beta)+var(d3$NLSest_gamma)+var(d3$NLSest_delta),
+                 var(d4$NLSest_alpha)+var(d4$NLSest_beta)+var(d4$NLSest_gamma)+var(d4$NLSest_delta))
+SLS_Lin_var <- c(var(d1$SLSest_alpha)+var(d1$SLSest_beta)+var(d1$SLSest_gamma)+var(d1$SLSest_delta),
+                 var(d2$SLSest_alpha)+var(d2$SLSest_beta)+var(d2$SLSest_gamma)+var(d2$SLSest_delta),
+                 var(d3$SLSest_alpha)+var(d3$SLSest_beta)+var(d3$SLSest_gamma)+var(d3$SLSest_delta),
+                 var(d4$SLSest_alpha)+var(d4$SLSest_beta)+var(d4$SLSest_gamma)+var(d4$SLSest_delta))
+
+PriorInf <- rep(c("1","2","3","4"), 2)
+VarRatio <- c(SLS_Lin_var / NLS_Lin_var)
+DFVar <- data.frame(PriorInf, VarRatio)
+
+ggplot(DFVar, aes(x=PriorInf)) +
+  geom_point(aes(y=VarRatio), size=4) +
+  scale_x_discrete(name="Quality of prior information", labels=c("1"="Low", "2"="", "3"="", "4"="High")) +
+  scale_y_continuous(name=expression(Variance~Ratio~SLS/NLS), limits=c(0,NA)) +
+  labs(title="Ratio of variance of parameter estimates for Lotka-Volterra model",
+       subtitle=expression(sigma==0.1~";"~alpha==2/3~";"~beta==4/3~";"~gamma==1~";"~delta==1)) +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
+ggsave("../out/variance_ratio_lotka-volterra_sigma0.1_a0.67_b1.33_g1_d1.pdf", device="pdf")

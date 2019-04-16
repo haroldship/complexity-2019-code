@@ -1,5 +1,5 @@
 *.csv
 *.jpeg
-*.pdf
+#*.pdf
 .RData
 .Rhistory

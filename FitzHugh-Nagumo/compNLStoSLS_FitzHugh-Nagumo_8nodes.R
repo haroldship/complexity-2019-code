@@ -17,13 +17,13 @@ nlin_pars <- 'c'
 n <- 40
 time <- seq(0, 20, length.out=n)
 
-x0 <- c(-1, 1)
+x0 <- c(-1, 0.5)
 names(x0) <- vars
 
 #priorInf=c(0.1,1,3,5)
 priorInf=c(2, 4, 8, 16)
 model_out <- solve_ode(equations,theta,x0,time)
-#plot(model_out)
+plot(model_out)
 
 x_det <- model_out[,vars]
 sigma <- 0.05
