@@ -1,25 +1,25 @@
 rm(list=ls())
 
-pars <- c('alpha','beta','gamma','delta')
+pars <- c('alpha','beta','gamma','delta','epsilon','omega')
+nlin_pars <- c('epsilon','omega')
 vars <- c('X','Y')
-eq_X <- 'alpha*X-beta*X*Y'
-eq_Y <- 'delta*X*Y-gamma*Y'
+eq_X <- 'alpha*X-beta*(1+epsilon*sin(2*pi*(t/50+omega)))*X*Y'
+eq_Y <- 'delta*(1+epsilon*sin(2*pi*(t/50+omega)))*X*Y-gamma*Y'
 equations <- c(eq_X,eq_Y)
 names(equations) <- vars
-theta <- c(2/3, 4/3, 1, 1)
+theta <- c(2/3, 4/3, 1, 1, 0.2, 0.5)
 names(theta) <- pars
 x0 <- c(0.9, 0.9)
 names(x0) <- vars
 library("simode")
 
-sigma <- 0.4
+sigma <- 0.1
 priorInf=c(0.1,1,3,5)
 
 n <- 100
 time <- seq(0,25,length.out=n)
 model_out <- solve_ode(equations,theta,x0,time)
 plot(model_out)
-
 
 x_det <- model_out[,vars]
 
@@ -41,12 +41,18 @@ for(ip in 1:4){
     }
     names(obs) <- vars
     
+    nlin_init <- rnorm(length(theta[nlin_pars]),theta[nlin_pars],
+                       + priorInf[ip]*theta[nlin_pars])
+    names(nlin_init) <- nlin_pars
+    
     ptimeNLS <- system.time({
       NLSmc <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
+                      nlin_pars=nlin_pars, start=nlin_init,
                       im_method = "non-separable",
                       simode_ctrl=simode.control(optim_type = "im"))})
     ptimeSLS <- system.time({
       SLSmc <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
+                      nlin_pars=nlin_pars, start=nlin_init,
                       simode_ctrl=simode.control(optim_type = "im"))})
     
     list(NLSmc=NLSmc,SLSmc=SLSmc,ptimeNLS=ptimeNLS,ptimeSLS=ptimeSLS)
@@ -66,7 +72,9 @@ for(ip in 1:4){
   
   loss_df=data.frame(NLSmc=unlist(NLSmc_im_loss_vals),SLSmc=unlist(SLSmc_im_loss_vals),
                      NLSest_alpha=NLS_im_vars['alpha',],NLSest_beta=NLS_im_vars['beta',],NLSest_gamma=NLS_im_vars['gamma',],NLSest_delta=NLS_im_vars['delta',],
-                     SLSest_alpha=SLS_im_vars['alpha',],SLSest_beta=SLS_im_vars['beta',],SLSest_gamma=SLS_im_vars['gamma',],SLSest_delta=SLS_im_vars['delta',])
+                     NLSest_epsilon=NLS_im_vars['epsilon',],NLSest_omega=NLS_im_vars['omega',],
+                     SLSest_alpha=SLS_im_vars['alpha',],SLSest_beta=SLS_im_vars['beta',],SLSest_gamma=SLS_im_vars['gamma',],SLSest_delta=SLS_im_vars['delta',],
+                     SLSest_epsilon=SLS_im_vars['epsilon',],SLSest_omega=SLS_im_vars['omega',])
   time_df=data.frame(NLStime=unlist(NLSmc_time),SLStime=unlist(SLSmc_time))
   write.csv(loss_df, file = paste0(ip, "-NLStoSLSloss.csv"))
   write.csv(time_df, file = paste0(ip, "-NLStoSLStime.csv"))

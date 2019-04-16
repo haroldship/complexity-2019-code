@@ -64,6 +64,6 @@ ggplot(DFVar, aes(x=PriorInf)) +
   scale_x_discrete(name="Quality of prior information", labels=c("1"="Low", "2"="", "3"="", "4"="High")) +
   scale_y_continuous(name=expression(Variance~Ratio~SLS/NLS), limits=c(0,NA)) +
   labs(title="Ratio of variance of parameter estimates for Lotka-Volterra model",
-       subtitle=expression(sigma==0.1~";"~alpha==2/3~";"~beta==4/3~";"~gamma==1~";"~delta==1)) +
+       subtitle=expression(sigma==0.4~";"~alpha==2/3~";"~beta==4/3~";"~gamma==1~";"~delta==1)) +
   theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
-ggsave("../out/variance_ratio_lotka-volterra_sigma0.1_a0.67_b1.33_g1_d1.pdf", device="pdf")
+ggsave("../out/variance_ratio_lotka-volterra_sigma0.4_a0.67_b1.33_g1_d1.pdf", device="pdf")
