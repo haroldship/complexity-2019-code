@@ -87,5 +87,7 @@ ggplot(DFVar, aes(x=PriorInf)) +
   scale_shape_discrete(name="Parameter set") +
   scale_x_discrete(name="Quality of prior information", labels=c("1"="Low", "2"="", "3"="", "4"="High")) +
   scale_y_continuous(name=expression(Variance~Ratio~SLS/NLS), limits=c(0,NA)) +
-  ggtitle("Ratio of variance of parameter estimates for FitzHugh-Nagumo model") +
-  theme(plot.title = element_text(hjust = 0.5))
+  labs(title="Ratio of variance of parameter estimates for FitzHugh-Nagumo model",
+       subtitle=expression(V==-1~";"~R==1)) +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
+ggsave("variance_ratio_fitzhugh-nagumo_V-1_R1.pdf", device="pdf")
