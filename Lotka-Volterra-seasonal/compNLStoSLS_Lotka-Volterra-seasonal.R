@@ -23,6 +23,42 @@ plot(model_out)
 
 x_det <- model_out[,vars]
 
+obs <- list()
+for(i in 1:length(vars)) {
+  obs[[i]] <- x_det[,i] + rnorm(n,0,sigma)
+}
+names(obs) <- vars
+
+nlin_init <- rnorm(length(theta[nlin_pars]),theta[nlin_pars],
+                   + priorInf[4]*theta[nlin_pars])
+nlin_init <- sapply(nlin_init, max, 0)
+nlin_init <- sapply(nlin_init, min, 1)
+names(nlin_init) <- nlin_pars
+
+par(mfrow=c(1,2))
+plot(time,model_out[,2],'l', ylab="X")
+points(time,obs$X)
+
+plot(time,model_out[,3],'l', ylab="Y")
+points(time,obs$Y)
+
+lower <- rep(0, length(pars))
+names(lower) <- pars
+upper <- rep(1, length(pars))
+names(upper) <- pars
+
+NLSmc <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
+                nlin_pars=nlin_pars, start=nlin_init, lower=lower, upper=upper,
+                im_method = "non-separable",
+                simode_ctrl=simode.control(optim_type = "im", im_optim_method = "Nelder-Mead"))
+SLSmc <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
+                nlin_pars=nlin_pars, start=nlin_init, lower=lower, upper=upper,
+                simode_ctrl=simode.control(optim_type = "im", im_optim_method = "Nelder-Mead"))
+
+plot(NLSmc, type='fit', pars_true=theta, mfrow=c(1,2), legend=T)
+plot(SLSmc, type='fit', pars_true=theta, mfrow=c(1,2), legend=T)
+
+
 N <- 50
 set.seed(1000)
 library(doRNG)
@@ -47,13 +83,13 @@ for(ip in 1:4){
     
     ptimeNLS <- system.time({
       NLSmc <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
-                      nlin_pars=nlin_pars, start=nlin_init,
+                      nlin_pars=nlin_pars, start=nlin_init, lower=lower, upper=upper,
                       im_method = "non-separable",
-                      simode_ctrl=simode.control(optim_type = "im"))})
+                      simode_ctrl=simode.control(optim_type = "im", im_optim_method = "Nelder-Mead"))})
     ptimeSLS <- system.time({
       SLSmc <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
-                      nlin_pars=nlin_pars, start=nlin_init,
-                      simode_ctrl=simode.control(optim_type = "im"))})
+                      nlin_pars=nlin_pars, start=nlin_init, lower=lower, upper=upper,
+                      simode_ctrl=simode.control(optim_type = "im", im_optim_method = "Nelder-Mead"))})
     
     list(NLSmc=NLSmc,SLSmc=SLSmc,ptimeNLS=ptimeNLS,ptimeSLS=ptimeSLS)
   }

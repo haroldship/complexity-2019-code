@@ -66,7 +66,7 @@ SLS_Nlin_var <- c(var(d1$SLSest_epsilon)+var(d1$SLSest_omega),
 PriorInf <- rep(c("1","2","3","4"), 2)
 Linearity <- factor(c(rep("Linear", 4), rep("Non-linear", 4)))
 VarRatio <- c(SLS_Lin_var / NLS_Lin_var, SLS_Nlin_var / NLS_Nlin_var)
-DFVar <- data.frame(PriorInf, VarRatio)
+DFVar <- data.frame(PriorInf, Linearity, VarRatio)
 
 ggplot(DFVar, aes(x=PriorInf)) +
   geom_point(aes(y=VarRatio, colour=Linearity, shape=Linearity), size=4) +
