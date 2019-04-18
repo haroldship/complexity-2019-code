@@ -59,7 +59,7 @@ plot(NLSmc, type='fit', pars_true=theta, mfrow=c(1,2), legend=T)
 plot(SLSmc, type='fit', pars_true=theta, mfrow=c(1,2), legend=T)
 
 
-N <- 50
+N <- 200
 set.seed(1000)
 library(doRNG)
 require(doParallel)
@@ -68,7 +68,14 @@ registerDoParallel(cores=8)
 args <- c('equations', 'pars', 'time', 'x0', 'theta',
           'x_det', 'vars', 'sigma')
 
+SampleSize <- c(10*10, 20*20, 30*30, 40*40)
+
 for(ip in 1:4){
+  
+  n <- SampleSize[ip]
+  time <- seq(0,25,length.out=n)
+  model_out <- solve_ode(equations,theta,x0,time)
+  x_det <- model_out[,vars]
   
   results <- foreach(j=1:N, .packages='simode', .export=args) %dorng% {
     obs <- list()
@@ -78,7 +85,7 @@ for(ip in 1:4){
     names(obs) <- vars
     
     nlin_init <- rnorm(length(theta[nlin_pars]),theta[nlin_pars],
-                       + priorInf[ip]*theta[nlin_pars])
+                       + priorInf[2]*theta[nlin_pars])
     names(nlin_init) <- nlin_pars
     
     ptimeNLS <- system.time({
@@ -90,13 +97,12 @@ for(ip in 1:4){
       SLSmc <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
                       nlin_pars=nlin_pars, start=nlin_init, lower=lower, upper=upper,
                       simode_ctrl=simode.control(optim_type = "im", im_optim_method = "Nelder-Mead"))})
-    
     list(NLSmc=NLSmc,SLSmc=SLSmc,ptimeNLS=ptimeNLS,ptimeSLS=ptimeSLS)
   }
   
   
-  NLSmc_im_loss_vals <- sapply(results,function(x) x$NLSmc$im_loss)
-  SLSmc_im_loss_vals <- sapply(results,function(x) x$SLSmc$im_loss)
+  NLSmc_im_loss_vals <- sapply(results,function(x) x$NLSmc$im_loss/n)
+  SLSmc_im_loss_vals <- sapply(results,function(x) x$SLSmc$im_loss/n)
   NLS_im_vars=sapply(results,function(x) x$NLSmc$im_pars_est)
   SLS_im_vars=sapply(results,function(x) x$SLSmc$im_pars_est)
   NLSmc_time=list()
