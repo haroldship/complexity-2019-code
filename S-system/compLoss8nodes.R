@@ -43,9 +43,9 @@ ggplot(Allbox, aes(x = alllabel, y = LS ,color = Method)) +
                  "NLS2"="","SLS2"="",
                  "NLS3"="","SLS3"="",
                  "NLS4"="Low","SLS4"="Low")) +
-  ggtitle(expression(NLS~vs~SLS~of~"S-System"~Model~with~epsilon==0.05)) +
+  ggtitle(expression(NLS~vs~SLS~of~"S-System"~Model~with~sigma==0.05)) +
   theme(
     plot.title = element_text(hjust = 0.5, color="Blue", size=12, face="bold"),
     axis.title.x = element_text(color="blue", size=10, face="bold"),
     axis.title.y = element_text(color="blue", size=10, face="bold"))
-ggsave("nls_vs_sls_s-system_epsilon-0.05.pdf", device="pdf")
+ggsave("../out/nls_vs_sls_s-system_sigma-0.05.pdf", device="pdf")
