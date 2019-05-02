@@ -60,10 +60,44 @@ VarRatio <- c(SLS_Lin_var / NLS_Lin_var)
 DFVar <- data.frame(PriorInf, VarRatio)
 
 ggplot(DFVar, aes(x=PriorInf)) +
-  geom_point(aes(y=VarRatio), size=4) +
-  scale_x_discrete(name="Quality of prior information", labels=c("1"="Low", "2"="", "3"="", "4"="High")) +
+  geom_point(aes(y=VarRatio, colour="Linear", shape="Linear"), size=4) +
+  scale_x_discrete(name="Quality of prior information", labels=c("1"="High", "2"="", "3"="", "4"="Low")) +
   scale_y_continuous(name=expression(Variance~Ratio~SLS/NLS), limits=c(0,NA)) +
+  scale_colour_discrete(name="Parameter set") +
+  scale_shape_discrete(name="Parameter set") +
   labs(title="Ratio of variance of parameter estimates for Lotka-Volterra model",
        subtitle=expression(sigma==0.4~";"~alpha==2/3~";"~beta==4/3~";"~gamma==1~";"~delta==1)) +
   theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
 ggsave("../out/variance_ratio_lotka-volterra_sigma0.4_a0.67_b1.33_g1_d1.pdf", device="pdf")
+
+h_alpha <- ggplot(d4) +
+  geom_histogram(aes(x=NLSest_alpha, colour="NLS", fill="NLS"), alpha=0.5, binwidth=0.05) +
+  geom_histogram(aes(x=SLSest_alpha, colour="SLS", fill="SLS"), alpha=0.5, binwidth=0.05) +
+  geom_vline(xintercept=2/3) +
+  scale_x_continuous(name=expression(Estimate~alpha)) +
+  scale_fill_discrete(name="Method") +
+  scale_colour_discrete(name="Method")
+h_beta <- ggplot(d4) +
+  geom_histogram(aes(x=NLSest_beta, colour="NLS", fill="NLS"), alpha=0.5, binwidth=0.05) +
+  geom_histogram(aes(x=SLSest_beta, colour="SLS", fill="SLS"), alpha=0.5, binwidth=0.05) +
+  geom_vline(xintercept=4/3) +
+  scale_x_continuous(name=expression(Estimate~beta)) +
+  scale_fill_discrete(name="Method") +
+  scale_colour_discrete(name="Method")
+h_gamma <- ggplot(d4) +
+  geom_histogram(aes(x=NLSest_gamma, colour="NLS", fill="NLS"), alpha=0.5, binwidth=0.05) +
+  geom_histogram(aes(x=SLSest_gamma, colour="SLS", fill="SLS"), alpha=0.5, binwidth=0.05) +
+  geom_vline(xintercept=1) +
+  scale_x_continuous(name=expression(Estimate~gamma)) +
+  scale_fill_discrete(name="Method") +
+  scale_colour_discrete(name="Method")
+h_delta <- ggplot(d4) +
+  geom_histogram(aes(x=NLSest_delta, colour="NLS", fill="NLS"), alpha=0.5, binwidth=0.05) +
+  geom_histogram(aes(x=SLSest_delta, colour="SLS", fill="SLS"), alpha=0.5, binwidth=0.05) +
+  geom_vline(xintercept=1) +
+  scale_x_continuous(name=expression(Estimate~delta)) +
+  scale_fill_discrete(name="Method") +
+  scale_colour_discrete(name="Method")
+ggsave("../out/hist_linear_0.4_lotka-volterra-seasonal.pdf", device="pdf",
+       arrangeGrob(h_alpha, h_beta, h_gamma, h_delta, ncol=2, heights=unit(c(3, 3), c("in", "in")),
+                   top="Lotka-Volterra linear parameter estimates sigma=0.4"))

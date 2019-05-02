@@ -71,13 +71,13 @@ ggplot(Allbox, aes(x = alllabel, y = LS ,color = Method)) +
 
 ggplot(DVar, aes(x=PriorInf, y=LVar)) +
   geom_col(aes(fill=Method), position=position_dodge()) +
-  scale_x_discrete(name="Quality of prior information", labels=c("1"="Low", "2"="", "3"="", "4"="High")) +
+  scale_x_discrete(name="Quality of prior information", labels=c("1"="High", "2"="", "3"="", "4"="Low")) +
   scale_y_continuous(name="Variance") +
   ggtitle("Variance of Linear Parameters")
 
 ggplot(DVar, aes(x=PriorInf, y=NVar)) +
   geom_col(aes(fill=Method), position=position_dodge()) +
-  scale_x_discrete(name="Quality of prior information", labels=c("1"="Low", "2"="", "3"="", "4"="High")) +
+  scale_x_discrete(name="Quality of prior information", labels=c("1"="High", "2"="", "3"="", "4"="Low")) +
   scale_y_continuous(name="Variance") +
   ggtitle("Variance of Non-linear Parameters")
 
@@ -85,7 +85,7 @@ ggplot(DFVar, aes(x=PriorInf)) +
   geom_point(aes(y=VarRatio, colour=Linearity, shape=Linearity), size=4) +
   scale_colour_discrete(name="Parameter set") +
   scale_shape_discrete(name="Parameter set") +
-  scale_x_discrete(name="Quality of prior information", labels=c("1"="Low", "2"="", "3"="", "4"="High")) +
+  scale_x_discrete(name="Quality of prior information", labels=c("1"="High", "2"="", "3"="", "4"="Low")) +
   scale_y_continuous(name=expression(Variance~Ratio~SLS/NLS), limits=c(0,NA)) +
   labs(title="Ratio of variance of parameter estimates for FitzHugh-Nagumo model",
        subtitle=expression(V==-1~";"~R==0.5)) +

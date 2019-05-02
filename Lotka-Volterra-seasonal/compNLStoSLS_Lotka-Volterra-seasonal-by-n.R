@@ -31,8 +31,8 @@ names(obs) <- vars
 
 nlin_init <- rnorm(length(theta[nlin_pars]),theta[nlin_pars],
                    + priorInf[4]*theta[nlin_pars])
-nlin_init <- sapply(nlin_init, max, 0)
-nlin_init <- sapply(nlin_init, min, 1)
+#nlin_init <- sapply(nlin_init, max, 0)
+#nlin_init <- sapply(nlin_init, min, 1)
 names(nlin_init) <- nlin_pars
 
 par(mfrow=c(1,2))
@@ -42,9 +42,9 @@ points(time,obs$X)
 plot(time,model_out[,3],'l', ylab="Y")
 points(time,obs$Y)
 
-lower <- rep(0, length(pars))
+lower <- c(0.2, 0.5, 0.2, 0.2, 0.1, 0.25)
 names(lower) <- pars
-upper <- rep(1, length(pars))
+upper <- c(1, 2.0, 1.5, 1.5, 0.5, 0.8)
 names(upper) <- pars
 
 NLSmc <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
@@ -59,7 +59,7 @@ plot(NLSmc, type='fit', pars_true=theta, mfrow=c(1,2), legend=T)
 plot(SLSmc, type='fit', pars_true=theta, mfrow=c(1,2), legend=T)
 
 
-N <- 200
+N <- 100
 set.seed(1000)
 library(doRNG)
 require(doParallel)

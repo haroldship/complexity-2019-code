@@ -17,11 +17,11 @@ nlin_pars <- 'c'
 n <- 40
 time <- seq(0, 20, length.out=n)
 
-x0 <- c(-1, 2)
+x0 <- c(-1, 0.5)
 names(x0) <- vars
 
-#priorInf=c(0.1,1,3,5)
-priorInf=c(2, 4, 8, 16)
+priorInf=c(0.1,1,3,5)
+#priorInf=c(2, 4, 8, 16)
 model_out <- solve_ode(equations,theta,x0,time)
 plot(model_out)
 
@@ -77,7 +77,7 @@ sse_S <- sum(obs$V - model_S[,"V"])^2 + sum(obs$R - model_S[,"R"])^2
 
 cat(paste0("**** Non-separable SSE:",sse_NS," Separable SSE:",sse_S," ****"))
 
-N <- 50
+N <- 100
 set.seed(1000)
 library(doRNG)
 require(doParallel)

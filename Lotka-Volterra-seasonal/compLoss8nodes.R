@@ -1,6 +1,8 @@
 rm(list=ls())
 library(latex2exp)
 library(ggplot2)
+library(gridExtra)
+
 d1 <- read.csv("1-NLStoSLSloss.csv")
 d2 <- read.csv("2-NLStoSLSloss.csv")
 d3 <- read.csv("3-NLStoSLSloss.csv")
@@ -82,23 +84,23 @@ VarRatio <- c(SLS_Lin_var / NLS_Lin_var, SLS_Nlin_var / NLS_Nlin_var)
 Linearity <- factor(c(rep("Linear", 4), rep("Non-linear", 4)))
 DFVar <- data.frame(PriorInf, Linearity, VarRatio)
 
-ggplot(DVar, aes(x=SampleSize, y=LVar)) +
+col_lin <- ggplot(DVar, aes(x=SampleSize, y=LVar)) +
   geom_col(aes(fill=Method), position=position_dodge()) +
   scale_x_sqrt(name="Sample Size", breaks=c(100,400,900,1600)) +
   scale_y_continuous(name="Variance") +
   labs(title="Variance of Linear parameter estimates for Lotka-Volterra seasonal",
        subtitle=expression(sigma==0.1~";"~alpha==2/3~";"~beta==4/3~";"~gamma==1~";"~delta==1~";"~epsilon==0.2~";"~omega==0.5)) +
   theme(plot.title = element_text(hjust = 0.5, size=10), plot.subtitle = element_text(hjust = 0.5, size=9))
-ggsave("../out/lin_variance_by_sample_lotka-volterra-seasonal_sigma0.1_a0.67_b1.33_g1_d1_e0.2_o0.5.pdf", device="pdf")
 
-ggplot(DVar, aes(x=SampleSize, y=NVar)) +
+col_nlin <- ggplot(DVar, aes(x=SampleSize, y=NVar)) +
   geom_col(aes(fill=Method), position=position_dodge()) +
   scale_x_sqrt(name="Sample Size", breaks=c(100,400,900,1600)) +
   scale_y_continuous(name="Variance") +
   labs(title="Variance of Nonlinear parameter estimates for Lotka-Volterra seasonal",
        subtitle=expression(sigma==0.1~";"~alpha==2/3~";"~beta==4/3~";"~gamma==1~";"~delta==1~";"~epsilon==0.2~";"~omega==0.5)) +
   theme(plot.title = element_text(hjust = 0.5, size=10), plot.subtitle = element_text(hjust = 0.5, size=9))
-ggsave("../out/nlin_variance_by_sample_lotka-volterra-seasonal_sigma0.1_a0.67_b1.33_g1_d1_e0.2_o0.5.pdf", device="pdf")
+ggsave("../out/variance_by_sample_lotka-volterra-seasonal_sigma0.1_a0.67_b1.33_g1_d1_e0.2_o0.5.pdf", device="pdf",
+       arrangeGrob(col_lin, col_nlin, ncol=2))
 
 ggplot(DFVar, aes(x=PriorInf)) +
   geom_point(aes(y=VarRatio, colour=Linearity, shape=Linearity), size=4) +
@@ -110,3 +112,103 @@ ggplot(DFVar, aes(x=PriorInf)) +
        subtitle=expression(sigma==0.1~";"~alpha==2/3~";"~beta==4/3~";"~gamma==1~";"~delta==1~";"~epsilon==0.2~";"~omega==0.5)) +
   theme(plot.title = element_text(hjust = 0.5, size=10), plot.subtitle = element_text(hjust = 0.5))
 ggsave("../out/variance_ratio_by_sample_lotka-volterra-seasonal_sigma0.1_a0.67_b1.33_g1_d1_e0.2_o0.5.pdf", device="pdf")
+
+h_alpha <- ggplot(d1) +
+  geom_histogram(aes(x=NLSest_alpha, colour="NLS", fill="NLS"), alpha=0.5, binwidth=0.05) +
+  geom_histogram(aes(x=SLSest_alpha, colour="SLS", fill="SLS"), alpha=0.5, binwidth=0.05) +
+  geom_vline(xintercept=2/3) +
+  scale_x_continuous(name=expression(Estimate~alpha)) +
+  scale_fill_discrete(name="Method") +
+  scale_colour_discrete(name="Method")
+h_beta <- ggplot(d1) +
+  geom_histogram(aes(x=NLSest_beta, colour="NLS", fill="NLS"), alpha=0.5, binwidth=0.05) +
+  geom_histogram(aes(x=SLSest_beta, colour="SLS", fill="SLS"), alpha=0.5, binwidth=0.05) +
+  geom_vline(xintercept=4/3) +
+  scale_x_continuous(name=expression(Estimate~beta)) +
+  scale_fill_discrete(name="Method") +
+  scale_colour_discrete(name="Method")
+h_gamma <- ggplot(d1) +
+  geom_histogram(aes(x=NLSest_gamma, colour="NLS", fill="NLS"), alpha=0.5, binwidth=0.05) +
+  geom_histogram(aes(x=SLSest_gamma, colour="SLS", fill="SLS"), alpha=0.5, binwidth=0.05) +
+  geom_vline(xintercept=1) +
+  scale_x_continuous(name=expression(Estimate~gamma)) +
+  scale_fill_discrete(name="Method") +
+  scale_colour_discrete(name="Method")
+h_delta <- ggplot(d1) +
+  geom_histogram(aes(x=NLSest_delta, colour="NLS", fill="NLS"), alpha=0.5, binwidth=0.05) +
+  geom_histogram(aes(x=SLSest_delta, colour="SLS", fill="SLS"), alpha=0.5, binwidth=0.05) +
+  geom_vline(xintercept=1) +
+  scale_x_continuous(name=expression(Estimate~delta)) +
+  scale_fill_discrete(name="Method") +
+  scale_colour_discrete(name="Method")
+ggsave("../out/hist_linear_100_lotka-volterra-seasonal.pdf", device="pdf",
+       arrangeGrob(h_alpha, h_beta, h_gamma, h_delta, ncol=2, heights=unit(c(3, 3), c("in", "in")),
+                   top="Lotka-Volterra season linear parameter estimates, n=100"))
+
+h_epsilon <- ggplot(d1) +
+  geom_histogram(aes(x=NLSest_epsilon, colour="NLS", fill="NLS"), alpha=0.5, binwidth=0.05) +
+  geom_histogram(aes(x=SLSest_epsilon, colour="SLS", fill="SLS"), alpha=0.5, binwidth=0.05) +
+  geom_vline(xintercept=0.2) +
+  scale_x_continuous(name=expression(Estimate~epsilon)) +
+  scale_fill_discrete(name="Method") +
+  scale_colour_discrete(name="Method")
+h_omega <- ggplot(d1) +
+  geom_histogram(aes(x=NLSest_omega, colour="NLS", fill="NLS"), alpha=0.5, binwidth=0.05) +
+  geom_histogram(aes(x=SLSest_omega, colour="SLS", fill="SLS"), alpha=0.5, binwidth=0.05) +
+  geom_vline(xintercept=0.5) +
+  scale_x_continuous(name=expression(Estimate~omega)) +
+  scale_fill_discrete(name="Method") +
+  scale_colour_discrete(name="Method")
+ggsave("../out/hist_non-linear_100_lotka-volterra-seasonal.pdf", device="pdf",
+       arrangeGrob(h_epsilon, h_omega, ncol=2, heights=unit(c(3, 3), c("in", "in")),
+                   top="Lotka-Volterra season non-linear parameter estimates, n=100"))
+
+h_alpha <- ggplot(d4) +
+  geom_histogram(aes(x=NLSest_alpha, colour="NLS", fill="NLS"), alpha=0.5, binwidth=0.05) +
+  geom_histogram(aes(x=SLSest_alpha, colour="SLS", fill="SLS"), alpha=0.5, binwidth=0.05) +
+  geom_vline(xintercept=2/3) +
+  scale_x_continuous(name=expression(Estimate~alpha)) +
+  scale_fill_discrete(name="Method") +
+  scale_colour_discrete(name="Method")
+h_beta <- ggplot(d4) +
+  geom_histogram(aes(x=NLSest_beta, colour="NLS", fill="NLS"), alpha=0.5, binwidth=0.05) +
+  geom_histogram(aes(x=SLSest_beta, colour="SLS", fill="SLS"), alpha=0.5, binwidth=0.05) +
+  geom_vline(xintercept=4/3) +
+  scale_x_continuous(name=expression(Estimate~beta)) +
+  scale_fill_discrete(name="Method") +
+  scale_colour_discrete(name="Method")
+h_gamma <- ggplot(d4) +
+  geom_histogram(aes(x=NLSest_gamma, colour="NLS", fill="NLS"), alpha=0.5, binwidth=0.05) +
+  geom_histogram(aes(x=SLSest_gamma, colour="SLS", fill="SLS"), alpha=0.5, binwidth=0.05) +
+  geom_vline(xintercept=1) +
+  scale_x_continuous(name=expression(Estimate~gamma)) +
+  scale_fill_discrete(name="Method") +
+  scale_colour_discrete(name="Method")
+h_delta <- ggplot(d4) +
+  geom_histogram(aes(x=NLSest_delta, colour="NLS", fill="NLS"), alpha=0.5, binwidth=0.05) +
+  geom_histogram(aes(x=SLSest_delta, colour="SLS", fill="SLS"), alpha=0.5, binwidth=0.05) +
+  geom_vline(xintercept=1) +
+  scale_x_continuous(name=expression(Estimate~delta)) +
+  scale_fill_discrete(name="Method") +
+  scale_colour_discrete(name="Method")
+ggsave("../out/hist_linear_1600_lotka-volterra-seasonal.pdf", device="pdf",
+       arrangeGrob(h_alpha, h_beta, h_gamma, h_delta, ncol=2, heights=unit(c(3, 3), c("in", "in")),
+                   top="Lotka-Volterra season linear parameter estimates, n=1,600"))
+
+h_epsilon <- ggplot(d4) +
+  geom_histogram(aes(x=NLSest_epsilon, colour="NLS", fill="NLS"), alpha=0.5, binwidth=0.05) +
+  geom_histogram(aes(x=SLSest_epsilon, colour="SLS", fill="SLS"), alpha=0.5, binwidth=0.05) +
+  geom_vline(xintercept=0.2) +
+  scale_x_continuous(name=expression(Estimate~epsilon)) +
+  scale_fill_discrete(name="Method") +
+  scale_colour_discrete(name="Method")
+h_omega <- ggplot(d4) +
+  geom_histogram(aes(x=NLSest_omega, colour="NLS", fill="NLS"), alpha=0.5, binwidth=0.05) +
+  geom_histogram(aes(x=SLSest_omega, colour="SLS", fill="SLS"), alpha=0.5, binwidth=0.05) +
+  geom_vline(xintercept=0.5) +
+  scale_x_continuous(name=expression(Estimate~omega)) +
+  scale_fill_discrete(name="Method") +
+  scale_colour_discrete(name="Method")
+ggsave("../out/hist_non-linear_1600_lotka-volterra-seasonal.pdf", device="pdf",
+       arrangeGrob(h_epsilon, h_omega, ncol=2, heights=unit(c(3, 3), c("in", "in")),
+                   top="Lotka-Volterra season non-linear parameter estimates, n=1,600"))
