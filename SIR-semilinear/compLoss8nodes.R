@@ -80,7 +80,7 @@ ggplot(DFVar, aes(x=PriorInf)) +
   scale_colour_discrete(name="Parameter set") +
   scale_shape_discrete(name="Parameter set") +
   scale_x_discrete(name="Quality of prior information", labels=c("1"="High", "2"="", "3"="", "4"="Low")) +
-  scale_y_continuous(name=expression(Variance~Ratio~SLS/NLS), limits=c(0,1.25)) +
+  scale_y_continuous(name=expression(Variance~Ratio~SLS/NLS), limits=c(0,NA)) +
   ggtitle(expression("Ratio of variance of parameter estimates for semi-linear SIR model"~sigma==0.001)) +
   theme(plot.title = element_text(hjust = 0.5))
 ggsave("../out/variance_ratio_semi-linear-sir_sigma-0.001.pdf", device="pdf")

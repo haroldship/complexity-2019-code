@@ -46,7 +46,7 @@ time <- 1:n
 
 x0 <- c(S0,I0)
 names(x0) <- vars
-sigma <- rep(0.001,length(Ivars))
+sigma <- 0.001
 priorInf=c(0.1,1,3,5)
 
 model_out <- solve_ode(equations,theta,x0,time)
@@ -56,7 +56,7 @@ x_det <- model_out[,Ivars]
 
 obs <- list()
 for(i in 1:length(Ivars)) {
-  obs[[i]] <- x_det[,i] + rnorm(n,0,sigma[i])
+  obs[[i]] <- x_det[,i] + rnorm(n,0,sigma)
 }
 names(obs) <- Ivars
 
@@ -80,15 +80,15 @@ gen_obs <- function(equations, pars, x0, time, obs, gamma, S_names, I_names) {
 
 
 pars <- c(names(beta),Svars)
-pars_min <- rep(0, length(pars))
+pars_min <- rep(0,length(pars))
 names(pars_min) <- pars
-pars_max <- rep(1, length(Svars))
-names(pars_max) <- Svars
-S0_init <- rep(0.5, length(S0))
-names(S0_init) <- Svars
+pars_max <- rep(1,length(S0))
+names(pars_max) <- names(S0)
+S0_init <- rep(0.5,length(S0))
+names(S0_init) <- names(S0)
 
-est <- simode(equations=equations, pars=pars, time=time, obs=obs,
-                         fixed=c(I0,gamma,kappa), nlin=Svars, start=S0_init,
+est <- simode(equations=equations, pars=pars, time=time, obs=obs[Ivars],
+                         fixed=c(I0,gamma,kappa), nlin=names(S0), start=S0_init,
                          lower=pars_min, upper=pars_max, gen_obs=gen_obs, gamma=gamma,
                          S_names=Svars, I_names=Ivars)
 summary(est)
@@ -108,7 +108,7 @@ for(ip in 1:4){
     # for(j in 1:N) {
     obs <- list()
     for(i in 1:length(Ivars)) {
-      obs[[i]] <- x_det[,i] + rnorm(n,0,sigma[i])
+      obs[[i]] <- x_det[,i] + rnorm(n,0,sigma)
     }
     names(obs) <- Ivars
     
@@ -117,14 +117,14 @@ for(ip in 1:4){
     names(nlin_init) <- Svars
     
     ptimeNLS <- system.time({
-      NLSmc <- simode(equations=equations, pars=pars, time=time, obs=obs,
+      NLSmc <- simode(equations=equations, pars=pars, time=time, obs=obs[Ivars],
                       fixed=c(I0,gamma,kappa), nlin=Svars, start=nlin_init,
                       lower=pars_min, upper=pars_max, gen_obs=gen_obs, gamma=gamma,
                       S_names=Svars, I_names=Ivars, 
                       im_method = "non-separable",
                       simode_ctrl=simode.control(optim_type = "im"))})
     ptimeSLS <- system.time({
-      SLSmc <- simode(equations=equations, pars=pars, time=time, obs=obs,
+      SLSmc <- simode(equations=equations, pars=pars, time=time, obs=obs[Ivars],
                       fixed=c(I0,gamma,kappa), nlin=Svars, start=nlin_init,
                       lower=pars_min, upper=pars_max, gen_obs=gen_obs, gamma=gamma,
                       S_names=Svars, I_names=Ivars, 
@@ -157,13 +157,13 @@ for(ip in 1:4){
                      NLSest_S1_3=NLS_im_vars['S1_3',],NLSest_S2_3=NLS_im_vars['S2_3',],
                      NLSest_S1_4=NLS_im_vars['S1_4',],NLSest_S2_4=NLS_im_vars['S2_4',],
                      NLSest_S1_5=NLS_im_vars['S1_5',],NLSest_S2_5=NLS_im_vars['S2_5',],
-                     SLSest_beta1_1=NLS_im_vars['beta1_1',],SLSest_beta1_2=NLS_im_vars['beta1_2',],
-                     SLSest_beta2_1=NLS_im_vars['beta2_1',],SLSest_beta2_2=NLS_im_vars['beta2_2',],
-                     SLSest_S1_1=NLS_im_vars['S1_1',],SLSest_S2_1=NLS_im_vars['S2_1',],
-                     SLSest_S1_2=NLS_im_vars['S1_2',],SLSest_S2_2=NLS_im_vars['S2_2',],
-                     SLSest_S1_3=NLS_im_vars['S1_3',],SLSest_S2_3=NLS_im_vars['S2_3',],
-                     SLSest_S1_4=NLS_im_vars['S1_4',],SLSest_S2_4=NLS_im_vars['S2_4',],
-                     SLSest_S1_5=NLS_im_vars['S1_5',],SLSest_S2_5=NLS_im_vars['S2_5',]
+                     SLSest_beta1_1=SLS_im_vars['beta1_1',],SLSest_beta1_2=SLS_im_vars['beta1_2',],
+                     SLSest_beta2_1=SLS_im_vars['beta2_1',],SLSest_beta2_2=SLS_im_vars['beta2_2',],
+                     SLSest_S1_1=SLS_im_vars['S1_1',],SLSest_S2_1=SLS_im_vars['S2_1',],
+                     SLSest_S1_2=SLS_im_vars['S1_2',],SLSest_S2_2=SLS_im_vars['S2_2',],
+                     SLSest_S1_3=SLS_im_vars['S1_3',],SLSest_S2_3=SLS_im_vars['S2_3',],
+                     SLSest_S1_4=SLS_im_vars['S1_4',],SLSest_S2_4=SLS_im_vars['S2_4',],
+                     SLSest_S1_5=SLS_im_vars['S1_5',],SLSest_S2_5=SLS_im_vars['S2_5',]
   )
   time_df=data.frame(NLStime=unlist(NLSmc_time),SLStime=unlist(SLSmc_time))
   write.csv(loss_df, file = paste0(ip, "-NLStoSLSloss.csv"))
