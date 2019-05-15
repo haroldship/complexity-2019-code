@@ -1,12 +1,10 @@
 rm(list=ls())
 library(latex2exp)
 library(ggplot2)
-d10 <- read.csv("1-NLStoSLSloss.csv")
-d20 <- read.csv("2-NLStoSLSloss.csv")
+d1 <- read.csv("1-NLStoSLSloss.csv")
+d2 <- read.csv("2-NLStoSLSloss.csv")
 d3 <- read.csv("3-NLStoSLSloss.csv")
 d4 <- read.csv("4-NLStoSLSloss.csv")
-d1=d10[1:49,]
-d2=d20[1:49,]
 
 dAll<-data.frame(NLS1=d1$NLSmc,SLS1=d1$SLSmc,
                  NLS2=d2$NLSmc,SLS2=d2$SLSmc,
@@ -96,7 +94,7 @@ ggplot(d1) +
   scale_x_continuous(name=expression(Estimate~gamma[11])) +
   scale_fill_discrete(name="Method") +
   scale_colour_discrete(name="Method")
-ggsave("../out/hist_gamma12_gma_sigma-0.005.pdf", device="pdf")
+ggsave("../out/hist_gamma11_gma_sigma-0.005.pdf", device="pdf")
 
 ggplot(d1) +
   geom_histogram(aes(x=NLSest_gamma12, colour="NLS", fill="NLS"), alpha=0.5, binwidth=1) +
@@ -108,7 +106,7 @@ ggplot(d1) +
   scale_fill_discrete(name="Method") +
   scale_colour_discrete(name="Method") +
   geom_vline(xintercept=3)
-ggsave("../out/hist_f112_gma_sigma-0.005.pdf", device="pdf")
+ggsave("../out/hist_gamma12_gma_sigma-0.005.pdf", device="pdf")
 
   
 ggplot(d1) +
@@ -121,4 +119,5 @@ ggplot(d1) +
   scale_fill_discrete(name="Method") +
   scale_colour_discrete(name="Method") +
   geom_vline(xintercept=0.5)
+ggsave("../out/hist_f112_gma_sigma-0.005.pdf", device="pdf")
 
