@@ -1,4 +1,7 @@
 rm(list=ls())
+library(simode)
+library(doRNG)
+require(doParallel)
 set.seed(2000)
 
 vars <- paste0('x', 1:3)
@@ -31,11 +34,15 @@ time <- seq(0,4,length.out=n)
 model_out <- solve_ode(equations,theta,x0,time)
 x_det <- model_out[,vars]
 
+SNR <- 10
+sigma_x <- apply(x_det, 2, sd)
+sigma <- signif(sigma_x / SNR, digits=2)
 
-sigma <- 0.005
+print(sigma)
+
 obs <- list()
 for(i in 1:length(vars)) {
-  obs[[i]] <- x_det[,i] + rnorm(n,0,sigma)
+  obs[[i]] <- x_det[,i] + rnorm(n,0,sigma[i])
 }
 names(obs) <- vars
 
@@ -47,14 +54,18 @@ points(time,obs$x1,pch=1)
 points(time,obs$x2,pch=2)
 points(time,obs$x3,pch=4)
 
-nlin_init <- rnorm(length(theta[nlin_pars]),theta[nlin_pars],1 * abs(theta[nlin_pars]))
-names(nlin_init) <- nlin_pars
 pars_min <- c(0, -1.1, -1.1, 0, 0, -1.1, 0, 0, -1.1, 0, 0, -1.1, 0, 0, 0, 0, -1.1, 0, 0)
+#pars_min <- pars_min * 2
 names(pars_min) <- pars
 pars_max <- c(6, 0, 0, 6, 1, 0, 6, 1, 0, 6, 1, 0, 6, 1, 6, 1, 0, 6, 1)
+#pars_max <- pars_max * 2
 names(pars_max) <- pars
 
-library("simode")
+priorInf=c(0.1,1,3,5)
+
+nlin_init <- rnorm(length(theta[nlin_pars]),theta[nlin_pars],
+                   + priorInf[1]*abs(theta[nlin_pars]))
+names(nlin_init) <- nlin_pars
 
 NLSest <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
        nlin_pars=nlin_pars, start=nlin_init, lower=pars_min, upper=pars_max,
@@ -67,42 +78,64 @@ SLSest <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
                  simode_ctrl=simode.control(optim_type = "im"))
 plot(SLSest, type="fit", show="im")
 
-priorInf=c(0.1,1,3,5)
-
+unlink("log")
 N <- 50
 set.seed(1000)
-library(doRNG)
-require(doParallel)
-registerDoParallel(cores=8)
+cl <- makeForkCluster(8, outfile="log")
+registerDoParallel(cl)
 
 args <- c('equations', 'pars', 'time', 'x0', 'theta',
           'nlin_pars', 'x_det', 'vars', 'sigma')
 
+
+results <- list()
+
 for(ip in 1:4){
   
-  results <- foreach(j=1:N, .packages='simode', .export=args) %dorng% {
-    # for(j in 1:N) {
-    obs <- list()
-    for(i in 1:length(vars)) {
-      obs[[i]] <- x_det[,i] + rnorm(n,0,sigma)
+  results <- foreach(j=1:N, .packages='simode') %dorng% {
+  # for(j in 1:N) {
+    
+    SLSmc <- NULL
+    NLSmc <- NULL
+    
+    while (TRUE) {
+      #print("beginloop")
+      obs <- list()
+      for(i in 1:length(vars)) {
+        obs[[i]] <- x_det[,i] + rnorm(n,0,sigma[i])
+      }
+      names(obs) <- vars
+      
+      nlin_init <- rnorm(length(theta[nlin_pars]),theta[nlin_pars],
+                         + priorInf[ip]*abs(theta[nlin_pars]))
+      names(nlin_init) <- nlin_pars
+
+      ptimeNLS <- system.time({
+        NLSmc <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
+                        nlin_pars=nlin_pars, start=nlin_init,
+                        lower=pars_min, upper=pars_max,
+                        im_method = "non-separable",
+                        simode_ctrl=simode.control(optim_type = "im"))})
+      if (is.null(NLSmc) || !is.numeric(NLSmc$im_pars_est)) {
+        print("should repeat NLS call")
+        next
+      }
+      ptimeSLS <- system.time({
+        SLSmc <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
+                        nlin_pars=nlin_pars, start=nlin_init,
+                        lower=pars_min, upper=pars_max,
+                        simode_ctrl=simode.control(optim_type = "im"))})
+      if (is.null(SLSmc) || !is.numeric(SLSmc$im_pars_est)) {
+        print("should repeat SLS call")
+        next
+      }
+      break
     }
-    names(obs) <- vars
     
-    nlin_init <- rnorm(length(theta[nlin_pars]),theta[nlin_pars],
-                       priorInf[ip]*abs(theta[nlin_pars]))
-    names(nlin_init) <- nlin_pars
-    
-    ptimeNLS <- system.time({
-      NLSmc <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
-                      nlin_pars=nlin_pars, start=nlin_init, 
-                      im_method = "non-separable",
-                      simode_ctrl=simode.control(optim_type = "im"))})
-    ptimeSLS <- system.time({
-      SLSmc <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
-                      nlin_pars=nlin_pars, start=nlin_init,
-                      simode_ctrl=simode.control(optim_type = "im"))})
-    
+    #print(paste0("NLS num:", is.numeric(NLSmc$im_pars_est), " SLS num:", is.numeric(SLSmc$im_pars_est), " num NLS:", length(NLSmc$im_pars_est), " num SLS:", length(SLSmc$im_pars_est)))
+
     list(NLSmc=NLSmc,SLSmc=SLSmc,ptimeNLS=ptimeNLS,ptimeSLS=ptimeSLS)
+    #results[[j]] <- list(NLSmc=NLSmc,SLSmc=SLSmc,ptimeNLS=ptimeNLS,ptimeSLS=ptimeSLS)
   }
   
   
@@ -141,5 +174,7 @@ for(ip in 1:4){
   write.csv(loss_df, file = paste0(ip, "-NLStoSLSloss.csv"))
   write.csv(time_df, file = paste0(ip, "-NLStoSLStime.csv"))
 }
+
+
 #plot(unlist(NLSmc_im_loss_vals),type='l')
 #lines(unlist(SLSmc_im_loss_vals),col="red")
