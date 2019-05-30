@@ -36,18 +36,18 @@ line <- "#1F3552"
 ggplot(Allbox, aes(x = alllabel, y = LS ,color = Method)) +
   geom_boxplot() +
   scale_y_continuous(name = "Integral matching loss function") +
-  coord_cartesian(ylim=c(0,25)) +
+  coord_cartesian(ylim=c(0,3)) +
   scale_x_discrete(name = "Quality of prior information",
                    labels=c("NLS1"="High","SLS1"="High",
                             "NLS2"="","SLS2"="",
                             "NLS3"="","SLS3"="",
                             "NLS4"="Low","SLS4"="Low")) +
-  ggtitle(expression(NLS~vs~SLS~of~GMA~Model~with~SNR==10)) +
+  ggtitle(expression(NLS~vs~SLS~of~GMA~Model~with~SNR==3)) +
   theme(
     plot.title = element_text(hjust = 0.5, color="Blue", size=12, face="bold"),
     axis.title.x = element_text(color="blue", size=10, face="bold"),
     axis.title.y = element_text(color="blue", size=10, face="bold"))
-ggsave("../out/nls_vs_sls_gma_SNR10.pdf", device="pdf")
+ggsave("../out/nls_vs_sls_gma_SNR3.pdf", device="pdf")
 
 
 # variances of parameters estimates
@@ -89,7 +89,7 @@ col_lin <- ggplot(DVar, aes(x=PriorInf, y=LVar)) +
   scale_y_continuous(name="Variance") +
   coord_cartesian(ylim=c(0, ymax)) +
   labs(title="Variance of Linear parameter estimates",
-       subtitle=expression(GMA~model,~SNR==10)) +
+       subtitle=expression(GMA~model,~SNR==3)) +
   theme(plot.title = element_text(hjust = 0.5, size=10), plot.subtitle = element_text(hjust = 0.5, size=9))
 
 col_nlin <- ggplot(DVar, aes(x=PriorInf, y=NVar)) +
@@ -98,9 +98,9 @@ col_nlin <- ggplot(DVar, aes(x=PriorInf, y=NVar)) +
   scale_y_continuous(name="Variance") +
   coord_cartesian(ylim=c(0, ymax)) +
   labs(title="Variance of Nonlinear parameter estimates",
-       subtitle=expression(GMA~model,~SNR==10)) +
+       subtitle=expression(GMA~model,~SNR==3)) +
   theme(plot.title = element_text(hjust = 0.5, size=10), plot.subtitle = element_text(hjust = 0.5, size=9))
-ggsave("../out/variance_gma_SNR10.pdf", device="pdf",
+ggsave("../out/variance_gma_SNR3.pdf", device="pdf",
        arrangeGrob(col_lin, col_nlin, ncol=2))
 
 
@@ -110,9 +110,9 @@ ggplot(DFVar, aes(x=PriorInf)) +
   scale_shape_discrete(name="Parameter set") +
   scale_x_discrete(name="Quality of prior information", labels=c("1"="High", "2"="", "3"="", "4"="Low")) +
   scale_y_continuous(name=expression(Variance~Ratio~SLS/NLS), limits=c(0,NA)) +
-  ggtitle(expression("Ratio of variance of parameter estimates for GMA model"~SNR==10)) +
+  ggtitle(expression("Ratio of variance of parameter estimates for GMA model"~SNR==3)) +
   theme(plot.title = element_text(hjust = 0.5))
-ggsave("../out/variance_ratio_gma_SNR10.pdf", device="pdf")
+ggsave("../out/variance_ratio_gma_SNR3.pdf", device="pdf")
 
 ggplot(d1) +
   geom_histogram(aes(x=NLSest_gamma11, colour="NLS", fill="NLS"), alpha=0.5, binwidth=0.1) +
@@ -125,7 +125,7 @@ ggplot(d1) +
   scale_x_continuous(name=expression(Estimate~gamma[11])) +
   scale_fill_discrete(name="Method") +
   scale_colour_discrete(name="Method")
-ggsave("../out/hist_gamma11_gma_SNR10.pdf", device="pdf")
+ggsave("../out/hist_gamma11_gma_SNR3.pdf", device="pdf")
 
 ggplot(d1) +
   geom_histogram(aes(x=NLSest_gamma12, colour="NLS", fill="NLS"), alpha=0.5, binwidth=1) +
@@ -137,7 +137,7 @@ ggplot(d1) +
   scale_fill_discrete(name="Method") +
   scale_colour_discrete(name="Method") +
   geom_vline(xintercept=3)
-ggsave("../out/hist_gamma12_gma_SNR10.pdf", device="pdf")
+ggsave("../out/hist_gamma12_gma_SNR3.pdf", device="pdf")
 
   
 ggplot(d1) +
@@ -150,5 +150,5 @@ ggplot(d1) +
   scale_fill_discrete(name="Method") +
   scale_colour_discrete(name="Method") +
   geom_vline(xintercept=0.5)
-ggsave("../out/hist_f112_gma_SNR10.pdf", device="pdf")
+ggsave("../out/hist_f112_gma_SNR3.pdf", device="pdf")
 

@@ -34,7 +34,7 @@ time <- seq(0,4,length.out=n)
 model_out <- solve_ode(equations,theta,x0,time)
 x_det <- model_out[,vars]
 
-SNR <- 10
+SNR <- 3
 sigma_x <- apply(x_det, 2, sd)
 sigma <- signif(sigma_x / SNR, digits=2)
 
