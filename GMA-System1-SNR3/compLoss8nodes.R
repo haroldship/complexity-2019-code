@@ -2,6 +2,21 @@ rm(list=ls())
 library(latex2exp)
 library(ggplot2)
 library(gridExtra)
+library(tidyr)
+
+pars1 <- c('gamma11','f121','f131','gamma12','f112','f122','gamma13','f113','f133')
+pars2 <- c('gamma21','f211','f221','gamma22','f222')
+pars3 <- c('gamma31','f311','f331','gamma32','f332')
+pars <- c(pars1,pars2,pars3)
+lin_pars <- c('gamma11','gamma12','gamma13','gamma21','gamma22','gamma31','gamma32')
+nlin_pars <- setdiff(pars,lin_pars)
+
+theta1 <- c(0.4,-1,-1,3,0.5,-0.1,2,0.75,-0.2)
+theta2 <- c(3,0.5,-0.1,1.5,0.5)
+theta3 <- c(2,0.75,-0.2,5,0.5)
+theta <- c(theta1,theta2,theta3)
+names(theta) <- pars
+
 
 d1 <- read.csv("1-NLStoSLSloss.csv")
 d2 <- read.csv("2-NLStoSLSloss.csv")
@@ -36,7 +51,7 @@ line <- "#1F3552"
 ggplot(Allbox, aes(x = alllabel, y = LS ,color = Method)) +
   geom_boxplot() +
   scale_y_continuous(name = "Integral matching loss function") +
-  coord_cartesian(ylim=c(0,3)) +
+  #coord_cartesian(ylim=c(0,5)) +
   scale_x_discrete(name = "Quality of prior information",
                    labels=c("NLS1"="High","SLS1"="High",
                             "NLS2"="","SLS2"="",
@@ -116,16 +131,15 @@ ggsave("../out/variance_ratio_gma_SNR3.pdf", device="pdf")
 
 ggplot(d1) +
   geom_histogram(aes(x=NLSest_gamma11, colour="NLS", fill="NLS"), alpha=0.5, binwidth=0.1) +
-  geom_vline(xintercept=0.1) +
   scale_x_continuous(name=expression(Estimate~gamma[11])) +
   scale_fill_discrete(name="Method") +
   scale_colour_discrete(name="Method") +
   geom_histogram(aes(x=SLSest_gamma11, colour="SLS", fill="SLS"), alpha=0.5, binwidth=0.1) +
-  geom_vline(xintercept=0.1) +
   scale_x_continuous(name=expression(Estimate~gamma[11])) +
   scale_fill_discrete(name="Method") +
-  scale_colour_discrete(name="Method")
-ggsave("../out/hist_gamma11_gma_SNR3.pdf", device="pdf")
+  scale_colour_discrete(name="Method") +
+  geom_vline(xintercept=theta['gamma11'])
+  ggsave("../out/hist_gamma11_gma_SNR3.pdf", device="pdf")
 
 ggplot(d1) +
   geom_histogram(aes(x=NLSest_gamma12, colour="NLS", fill="NLS"), alpha=0.5, binwidth=1) +
@@ -136,7 +150,7 @@ ggplot(d1) +
   scale_x_continuous(name=expression(Estimate~gamma[12])) +
   scale_fill_discrete(name="Method") +
   scale_colour_discrete(name="Method") +
-  geom_vline(xintercept=3)
+  geom_vline(xintercept=theta['gamma12'])
 ggsave("../out/hist_gamma12_gma_SNR3.pdf", device="pdf")
 
   
@@ -149,6 +163,30 @@ ggplot(d1) +
   scale_x_continuous(name=expression(Estimate~f[112])) +
   scale_fill_discrete(name="Method") +
   scale_colour_discrete(name="Method") +
-  geom_vline(xintercept=0.5)
+  geom_vline(xintercept=theta[f112])
 ggsave("../out/hist_f112_gma_SNR3.pdf", device="pdf")
+
+nls_theta_names <- paste0("NLSest_", pars)
+sls_theta_names <- paste0("SLSest_", pars)
+theta_names <- c(nls_theta_names, sls_theta_names)
+
+nls_all <- rbind(d1[,nls_theta_names], d2[,nls_theta_names], d3[,nls_theta_names], d4[,nls_theta_names])
+sls_all <- rbind(d1[,sls_theta_names], d2[,sls_theta_names], d3[,sls_theta_names], d4[,sls_theta_names])
+  
+nls_theta_hat <- sapply(nls_all, mean)
+names(nls_theta_hat) <- pars
+sls_theta_hat <- sapply(sls_all, mean)
+names(sls_theta_hat) <- pars
+nls_50pct <- apply((abs((nls_all - theta) / theta) < 0.50), 2,  mean)
+sls_50pct <- apply((abs((sls_all - theta) / theta) < 0.50), 2,  mean)
+nls_20pct <- apply((abs((nls_all - theta) / theta) < 0.20), 2,  mean)
+sls_20pct <- apply((abs((sls_all - theta) / theta) < 0.20), 2,  mean)
+param_type <- ifelse(substr(pars,1,1)=='g', "Linear", "Nonlinear")
+
+ParamsDF <- data.frame(Param=pars, Param_Type=param_type, Theta=theta, NLS_mean=nls_theta_hat, SLS_mean=sls_theta_hat, NLS_50pct=nls_50pct, SLS_50pct=sls_50pct, NLS_20pct=nls_20pct, SLS_20pct=sls_20pct, row.names=NULL)
+
+ParamsDF
+aggregate(ParamsDF[,6:9], list(ParamsDF$Param_Type), mean)
+sapply(ParamsDF[,6:9], mean)
+
 

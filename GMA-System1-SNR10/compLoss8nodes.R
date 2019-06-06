@@ -181,9 +181,12 @@ nls_50pct <- apply((abs((nls_all - theta) / theta) < 0.50), 2,  mean)
 sls_50pct <- apply((abs((sls_all - theta) / theta) < 0.50), 2,  mean)
 nls_20pct <- apply((abs((nls_all - theta) / theta) < 0.20), 2,  mean)
 sls_20pct <- apply((abs((sls_all - theta) / theta) < 0.20), 2,  mean)
+param_type <- ifelse(substr(pars,1,1)=='g', "Linear", "Nonlinear")
 
-ParamsDF <- data.frame(Param=pars, Theta=theta, NLS_mean=nls_theta_hat, SLS_mean=sls_theta_hat, NLS_50pct=nls_50pct, SLS_50pct=sls_50pct, NLS_20pct=nls_20pct, SLS_20pct=sls_20pct, row.names=NULL)
+ParamsDF <- data.frame(Param=pars, Param_Type=param_type, Theta=theta, NLS_mean=nls_theta_hat, SLS_mean=sls_theta_hat, NLS_50pct=nls_50pct, SLS_50pct=sls_50pct, NLS_20pct=nls_20pct, SLS_20pct=sls_20pct, row.names=NULL)
 
-
+ParamsDF
+aggregate(ParamsDF[,6:9], list(ParamsDF$Param_Type), mean)
+sapply(ParamsDF[,6:9], mean)
 
 

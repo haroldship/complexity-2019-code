@@ -46,13 +46,15 @@ for(i in 1:length(vars)) {
 }
 names(obs) <- vars
 
+pdf(file="../out/solution-gma-SNR3.pdf")
 par(mfrow=c(1,1))
-plot(time,model_out[,'x1'],'l',ylab="",ylim=c(0,1.5))
+plot(time,model_out[,'x1'],'l',ylab="",ylim=c(0,1.5), main=expression(GMA~System~with~SNR==3))
 lines(time,model_out[,'x2'])
 lines(time,model_out[,'x3'])
 points(time,obs$x1,pch=1)
 points(time,obs$x2,pch=2)
 points(time,obs$x3,pch=4)
+dev.off()
 
 pars_min <- c(0, -1.1, -1.1, 0, 0, -1.1, 0, 0, -1.1, 0, 0, -1.1, 0, 0, 0, 0, -1.1, 0, 0)
 #pars_min <- pars_min * 2
@@ -63,20 +65,20 @@ names(pars_max) <- pars
 
 priorInf=c(0.1,1,3,5)
 
-nlin_init <- rnorm(length(theta[nlin_pars]),theta[nlin_pars],
-                   + priorInf[1]*abs(theta[nlin_pars]))
-names(nlin_init) <- nlin_pars
-
-NLSest <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
-       nlin_pars=nlin_pars, start=nlin_init, lower=pars_min, upper=pars_max,
-       im_method = "non-separable",
-       simode_ctrl=simode.control(optim_type = "im"))
-par(mfrow=c(1,3))
-plot(NLSest, type="fit", show="im")
-SLSest <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
-                 nlin_pars=nlin_pars, start=nlin_init, lower=pars_min, upper=pars_max,
-                 simode_ctrl=simode.control(optim_type = "im"))
-plot(SLSest, type="fit", show="im")
+# nlin_init <- rnorm(length(theta[nlin_pars]),theta[nlin_pars],
+#                    + priorInf[1]*abs(theta[nlin_pars]))
+# names(nlin_init) <- nlin_pars
+# 
+# NLSest <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
+#        nlin_pars=nlin_pars, start=nlin_init, lower=pars_min, upper=pars_max,
+#        im_method = "non-separable",
+#        simode_ctrl=simode.control(optim_type = "im"))
+# par(mfrow=c(1,3))
+# plot(NLSest, type="fit", show="im")
+# SLSest <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
+#                  nlin_pars=nlin_pars, start=nlin_init, lower=pars_min, upper=pars_max,
+#                  simode_ctrl=simode.control(optim_type = "im"))
+# plot(SLSest, type="fit", show="im")
 
 unlink("log")
 N <- 50

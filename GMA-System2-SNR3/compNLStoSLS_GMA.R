@@ -4,10 +4,54 @@ library(doRNG)
 require(doParallel)
 set.seed(2000)
 
-vars <- paste0('Z', 1:16)
+vars <- paste0('Z', 1:34)
+
+# i1 <- 0
+# v1 <- 'alpha1*(Z1^g11)*(Z2^g21)*Z17'
+# v2 <- 'alpha2*(Z2^g22)*Z18'
+# v3 <- 'alpha3*(Z2^g23)*(Z3^g33)*Z19'
+# v4 <- 'alpha4*(Z3^g34)*(Z4^g44)*Z20'
+# v5 <- 'alpha5*(Z4^g45)*(Z5^g55)*(Z10^g105)*Z21'
+# v6 <- 'alpha6*(Z5^g56)*(Z6^g66)*Z22'
+# v7 <- 'alpha7*(Z6^g67)*Z23'
+# v8 <- 'alpha8*(Z3^g38)*Z24'
+# v9 <- 'alpha9*(Z4^g49)*(Z7^g79)*Z25'
+# v10 <- 'alpha10*(Z4^g410)*Z26'
+# v11 <- 'alpha11*(Z7^g711)*(Z8^g811)*Z20'
+# v12 <- 'alpha12*(Z7^g712)*(Z9^g912)*Z27'
+# v13 <- 'alpha13*(Z8^g813)*(Z10^g1013)*Z28'
+# v14 <- 'alpha14*(Z9^g914)*(Z10^g1014)*Z20'
+# v15 <- 'alpha15*(Z10^g1015)*(Z11^g1115)*(Z4^g415)*Z21'
+# v16 <- 'alpha16*(Z11^g1116)*(Z12^g1216)*Z22'
+# v17 <- 'alpha17*(Z12^g1217)*Z29'
+# v18 <- 'alpha18*(Z9^g918)*Z30'
+# v19 <- 'alpha19*(Z11^g1119)*(Z13^g1319)*Z31'
+# v20 <- 'alpha20*(Z12^g1220)*(Z14^g1420)*Z31'
+# v21 <- 'alpha21*(Z14^g1421)*Z32'
+# v22 <- 'alpha22*(Z13^g1322)*(Z15^g1522)*Z27'
+# v23 <- 'alpha23*(Z14^g1423)*(Z16^g1623)*Z27'
+# v24 <- 'alpha24*(Z15*g1524)*(Z16*g1624)*Z22'
+# v25 <- 'alpha25*(Z16*g1625)*Z33'
+# v26 <- 'alpha26*(Z10^g1026)*(Z12^g1226)*(Z4^g426)*Z34'
 
 # from 2015 paper
 # with I1 = I2 = 0
+# eq1 <- 'i1-v1'
+# eq2 <- 'v1-v2-v3'
+# eq3 <- 'v3-v4-v8'
+# eq4 <- 'v4-v5-v9-v10'
+# eq5 <- 'v5-v6'
+# eq6 <- 'v6-v7'
+# eq7 <- 'v9-v11-v12'
+# eq8 <- 'v11-v13'
+# eq9 <- 'v12-v14-v18'
+# eq10 <- 'v13+v14-v15-v26'
+# eq11 <- 'v15-v16-v19'
+# eq12 <- 'v16+v26-v17-v20'
+# eq13 <- 'v19-v22'
+# eq14 <- 'v20-v21-v23'
+# eq15 <- 'v22-v24'
+# eq16 <- 'v23+v24-v25'
 eq1 <- '-alpha1*(Z1^g11)*(Z2^g21)*Z17'
 eq2 <- 'alpha1*(Z1^g11)*(Z2^g21)*Z17-alpha2*(Z2^g22)*Z18-alpha3*(Z2^g23)*(Z3^g33)*Z19'
 eq3 <- 'alpha3*(Z2^g23)*(Z3^g33)*Z19-alpha4*(Z3^g34)*(Z4^g44)*Z20-alpha8*(Z3^g38)*Z24'
@@ -19,18 +63,37 @@ eq8 <- 'alpha11*(Z7^g711)*(Z8^g811)*Z20-alpha13*(Z8^g813)*(Z10^g1013)*Z28'
 eq9 <- 'alpha12*(Z7^g712)*(Z9^g912)*Z27-alpha14*(Z9^g914)*(Z10^g1014)*Z20-alpha18*(Z9^g918)*Z30'
 eq10 <- 'alpha13*(Z8^g813)*(Z10^g1013)*Z28+alpha14*(Z9^g914)*(Z10^g1014)*Z20-alpha15*(Z10^g1015)*(Z11^g1115)*(Z4^g415)*Z21-alpha26*(Z10^g1026)*(Z12^g1226)*(Z4^g426)*Z34'
 eq11 <- 'alpha15*(Z10^g1015)*(Z11^g1115)*(Z4^g415)*Z21-alpha16*(Z11^g1116)*(Z12^g1216)*Z22-alpha19*(Z11^g1119)*(Z13^g1319)*Z31'
-eq12 <- 'alpha16*(Z11^g1116)*(Z12^g1216)*Z22-alpha26*(Z10^g1026)*(Z12^g1226)*(Z4^g426)*Z34-alpha17*(Z12^g1217)*Z29-alpha20*(Z12^g1220)*(Z14^g1420)*Z31'
+eq12 <- 'alpha16*(Z11^g1116)*(Z12^g1216)*Z22+alpha26*(Z10^g1026)*(Z12^g1226)*(Z4^g426)*Z34-alpha17*(Z12^g1217)*Z29-alpha20*(Z12^g1220)*(Z14^g1420)*Z31'
 eq13 <- 'alpha19*(Z11^g1119)*(Z13^g1319)*Z31-alpha22*(Z13^g1322)*(Z15^g1522)*Z27'
 eq14 <- 'alpha20*(Z12^g1220)*(Z14^g1420)*Z31-alpha21*(Z14^g1421)*Z32-alpha23*(Z14^g1423)*(Z16^g1623)*Z27'
 eq15 <- 'alpha22*(Z13^g1322)*(Z15^g1522)*Z27-alpha24*(Z15*g1524)*(Z16*g1624)*Z22'
 eq16 <- 'alpha23*(Z14^g1423)*(Z16^g1623)*Z27+alpha24*(Z15*g1524)*(Z16*g1624)*Z22-alpha25*(Z16*g1625)*Z33'
+eq17 <- '0'
+eq18 <- '0'
+eq19 <- '0'
+eq20 <- '0'
+eq21 <- '0'
+eq22 <- '0'
+eq23 <- '0'
+eq24 <- '0'
+eq25 <- '0'
+eq26 <- '0'
+eq27 <- '0'
+eq28 <- '0'
+eq29 <- '0'
+eq30 <- '0'
+eq31 <- '0'
+eq32 <- '0'
+eq33 <- '0'
+eq34 <- '0'
 equations <- c(eq1,eq2,eq3,eq4,eq5,eq6,eq7,eq8,eq9,eq10,eq11,eq12,eq13,eq14,eq15,eq16)
+equations <- c(equations,eq17,eq18,eq19,eq20,eq21,eq22,eq23,eq24,eq25,eq26,eq27,eq28,eq29,eq30,eq31,eq32,eq33,eq34)
 names(equations) <- vars
 
 pars1 <- c('alpha1','g11','g21')
 pars2 <- c('alpha2','g22')
 pars3 <- c('alpha3','g23','g33')
-pars4 <- c('alpha4','g34','g244')
+pars4 <- c('alpha4','g34','g44')
 pars5 <- c('alpha5','g45','g55','g105')
 pars6 <- c('alpha6','g56','g66')
 pars7 <- c('alpha7','g67')
@@ -74,7 +137,7 @@ theta_nlin <- c(theta_nlin1,theta_nlin2,theta_nlin3,theta_nlin4)
 names(theta_nlin) <- nlin_pars
 theta <- c(theta_lin, theta_nlin)
 
-x0 <- rep(100, 16)
+x0 <- c(rep(100, 16), rep(1, 34-16))
 names(x0) <- vars
 
 n <- 100
@@ -95,17 +158,36 @@ for(i in 1:length(vars)) {
 }
 names(obs) <- vars
 
-######
-###### Nothing below this line is relevant yet
-######
+# v1 <- 'alpha1*(Z1^g11)*(Z2^g21)*Z17'
+V1 <- theta['alpha1']*(x_det[,'Z1']^theta['g11'])*(x_det[,'Z2']^theta['g21'])*x_det[,'Z17']
+V1_hat <- theta['alpha1']*(obs$Z1^theta['g11'])*(obs$Z2^theta['g21'])*obs$Z17
 
-par(mfrow=c(1,1))
-plot(time,model_out[,'x1'],'l',ylab="",ylim=c(0,1.5))
-lines(time,model_out[,'x2'])
-lines(time,model_out[,'x3'])
-points(time,obs$x1,pch=1)
-points(time,obs$x2,pch=2)
-points(time,obs$x3,pch=4)
+# v4 <- 'alpha4*(Z3^g34)*(Z4^g44)*Z20'
+V4 <- theta['alpha4']*(x_det[,'Z3']^theta['g34'])*(x_det[,'Z4']^theta['g44'])*x_det[,'Z20']
+V4_hat <- theta['alpha4']*(obs$Z3^theta['g34'])*(obs$Z4^theta['g44'])*obs$Z20
+
+# v7 <- 'alpha7*(Z6^g67)*Z23'
+V7 <- theta['alpha7']*(x_det[,'Z6']^theta['g67'])*x_det[,'Z23']
+V7_hat <- theta['alpha7']*(obs$Z6^theta['g67'])*obs$Z23
+
+# v9 <- 'alpha9*(Z4^g49)*(Z7^g79)*Z25'
+V9 <- theta['alpha9']*(x_det[,'Z4']^theta['g49'])*(x_det[,'Z7']^theta['g79'])*x_det[,'Z25']
+V9_hat <- theta['alpha9']*(obs$Z4^theta['g49'])*(obs$Z7^theta['g79'])*obs$Z25
+
+# v17 <- 'alpha17*(Z12^g1217)*Z29'
+V17 <- theta['alpha17']*(x_det[,'Z12']^theta['g1217'])*x_det[,'Z29']
+V17_hat <- theta['alpha17']*(obs$Z12^theta['g1217'])*obs$Z29
+
+par(mfrow=c(2,2))
+plot(time, V4,'l', ylab="V4", ylim=c(0,1.10))
+#points(time, V4_hat, pch=1)
+plot(time, V7,'l', ylab="V7", ylim=c(0,1.10))
+#points(time, V7_hat, pch=1)
+plot(time, V9,'l', ylab="V9", ylim=c(0,1.10))
+#points(time, V9_hat, pch=1)
+plot(time, V17,'l', ylab="V17", ylim=c(0,1.10))
+#points(time, V17_hat, pch=1)
+
 
 pars_min <- c(0, -1.1, -1.1, 0, 0, -1.1, 0, 0, -1.1, 0, 0, -1.1, 0, 0, 0, 0, -1.1, 0, 0)
 #pars_min <- pars_min * 2
