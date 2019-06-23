@@ -51,7 +51,7 @@ line <- "#1F3552"
 ggplot(Allbox, aes(x = alllabel, y = LS ,color = Method)) +
   geom_boxplot() +
   scale_y_continuous(name = "Integral matching loss function") +
-  #coord_cartesian(ylim=c(0,5)) +
+  coord_cartesian(ylim=c(0,3)) +
   scale_x_discrete(name = "Quality of prior information",
                    labels=c("NLS1"="High","SLS1"="High",
                             "NLS2"="","SLS2"="",
@@ -102,7 +102,7 @@ col_lin <- ggplot(DVar, aes(x=PriorInf, y=LVar)) +
   geom_col(aes(fill=Method), position=position_dodge()) +
   scale_x_discrete(name="Quality of prior information", labels=c("1"="High", "2"="", "3"="", "4"="Low")) +
   scale_y_continuous(name="Variance") +
-  coord_cartesian(ylim=c(0, ymax)) +
+  coord_cartesian(ylim=c(0, 20)) +
   labs(title="Variance of Linear parameter estimates",
        subtitle=expression(GMA~model,~SNR==10)) +
   theme(plot.title = element_text(hjust = 0.5, size=10), plot.subtitle = element_text(hjust = 0.5, size=9))
@@ -111,7 +111,7 @@ col_nlin <- ggplot(DVar, aes(x=PriorInf, y=NVar)) +
   geom_col(aes(fill=Method), position=position_dodge()) +
   scale_x_discrete(name="Quality of prior information", labels=c("1"="High", "2"="", "3"="", "4"="Low")) +
   scale_y_continuous(name="Variance") +
-  coord_cartesian(ylim=c(0, ymax)) +
+  coord_cartesian(ylim=c(0, 20)) +
   labs(title="Variance of Nonlinear parameter estimates",
        subtitle=expression(GMA~model,~SNR==10)) +
   theme(plot.title = element_text(hjust = 0.5, size=10), plot.subtitle = element_text(hjust = 0.5, size=9))
