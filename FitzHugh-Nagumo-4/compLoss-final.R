@@ -1,0 +1,40 @@
+rm(list=ls())
+#library(latex2exp)
+#library(ggplot2)
+d1 <- read.csv("1-NLStoSLSloss.csv")
+d2 <- read.csv("2-NLStoSLSloss.csv")
+d3 <- read.csv("3-NLStoSLSloss.csv")
+d4 <- read.csv("4-NLStoSLSloss.csv")
+#d1=d10[1:49,]
+#d2=d20[1:49,]
+
+pars <- c('a','b','c')
+theta <- c(0.2, 0.2, 3)
+names(theta) <- pars
+lin_pars <- c('a', 'b')
+nlin_pars <- 'c'
+
+dAll<-data.frame(NLS1=d1$NLSmc,SLS1=d1$SLSmc,
+                 NLS2=d2$NLSmc,SLS2=d2$SLSmc,
+                 NLS3=d3$NLSmc,SLS3=d3$SLSmc,
+                 NLS4=d4$NLSmc,SLS4=d4$SLSmc)
+
+NLS_Lin_mse <- c(mean((d1$NLSest_a - theta['a'])^2)+mean((d1$NLSest_b - theta['b'])^2),
+                 mean((d2$NLSest_a - theta['a'])^2)+mean((d2$NLSest_b - theta['b'])^2),
+                 mean((d3$NLSest_a - theta['a'])^2)+mean((d3$NLSest_b - theta['b'])^2),
+                 mean((d4$NLSest_a - theta['a'])^2)+mean((d4$NLSest_b - theta['b'])^2))
+SLS_Lin_mse <- c(mean((d1$SLSest_a - theta['a'])^2)+mean((d1$SLSest_b - theta['b'])^2),
+                 mean((d2$SLSest_a - theta['a'])^2)+mean((d2$SLSest_b - theta['b'])^2),
+                 mean((d3$SLSest_a - theta['a'])^2)+mean((d3$SLSest_b - theta['b'])^2),
+                 mean((d4$SLSest_a - theta['a'])^2)+mean((d4$SLSest_b - theta['b'])^2))
+NLS_Nlin_mse <- c(mean((d1$NLSest_c - theta['c'])^2),mean((d2$NLSest_c - theta['c'])^2),mean((d3$NLSest_c - theta['c'])^2),mean((d4$NLSest_c - theta['c'])^2))
+SLS_Nlin_mse <- c(mean((d1$SLSest_c - theta['c'])^2),mean((d2$SLSest_c - theta['c'])^2),mean((d3$SLSest_c - theta['c'])^2),mean((d4$SLSest_c - theta['c'])^2))
+
+DF <- rbind(signif(NLS_Lin_mse / SLS_Lin_mse, 2), signif(NLS_Nlin_mse / SLS_Nlin_mse, 2))
+DF <- cbind(c("Linear", "Nonlinear"), DF)
+colnames(DF) <- c("Parameters", "high", "good", "reasonable", "low")
+rownames(DF) <- c("","")
+
+for (j in 1:2) {
+  cat(paste0(paste(DF[j,], collapse=" & "), " \\\\\n"))
+}

@@ -17,7 +17,7 @@ nlin_pars <- 'c'
 n <- 40
 time <- seq(0, 20, length.out=n)
 
-x0 <- c(-1, 1)
+x0 <- c(-1, 0.5)
 names(x0) <- vars
 
 priorInf=c(0.1,1,3,5)
@@ -25,7 +25,7 @@ model_out <- solve_ode(equations,theta,x0,time)
 x_det <- model_out[,vars]
 plot(model_out)
 
-SNR <- 10
+SNR <- 5
 sigma_x <- apply(x_det, 2, sd)
 sigma <- signif(sigma_x / SNR, digits=2)
 print(sigma)

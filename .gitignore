@@ -1,5 +1,9 @@
 *.csv
 *.jpeg
+*.log
+*.synctex.gz
+*.aux
+tablearticle.pdf
 #*.pdf
 .RData
 .Rhistory

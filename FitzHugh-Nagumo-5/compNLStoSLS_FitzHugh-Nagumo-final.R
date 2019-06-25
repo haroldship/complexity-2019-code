@@ -17,7 +17,7 @@ nlin_pars <- 'c'
 n <- 40
 time <- seq(0, 20, length.out=n)
 
-x0 <- c(-1, 1)
+x0 <- c(-1, 0.5)
 names(x0) <- vars
 
 priorInf=c(0.1,1,3,5)

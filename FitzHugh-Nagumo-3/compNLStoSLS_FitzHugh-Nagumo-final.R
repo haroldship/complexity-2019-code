@@ -14,7 +14,7 @@ names(theta) <- pars
 lin_pars <- c('a', 'b')
 nlin_pars <- 'c'
 
-n <- 40
+n <- 20
 time <- seq(0, 20, length.out=n)
 
 x0 <- c(-1, 1)

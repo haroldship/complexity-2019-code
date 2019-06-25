@@ -25,7 +25,7 @@ model_out <- solve_ode(equations,theta,x0,time)
 x_det <- model_out[,vars]
 plot(model_out)
 
-SNR <- 10
+SNR <- 5
 sigma_x <- apply(x_det, 2, sd)
 sigma <- signif(sigma_x / SNR, digits=2)
 print(sigma)
