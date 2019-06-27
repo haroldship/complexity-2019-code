@@ -34,7 +34,7 @@ time <- seq(0,4,length.out=n)
 model_out <- solve_ode(equations,theta,x0,time)
 x_det <- model_out[,vars]
 
-SNR <- 10
+SNR <- 5
 sigma_x <- apply(x_det, 2, sd)
 sigma <- signif(sigma_x / SNR, digits=2)
 
@@ -110,6 +110,8 @@ for(ip in 1:4){
       
       nlin_init <- rnorm(length(theta[nlin_pars]),theta[nlin_pars],
                          + priorInf[ip]*abs(theta[nlin_pars]))
+      nlin_init <- pmax(nlin_init, pars_min[nlin_pars])
+      nlin_init <- pmin(nlin_init, pars_max[nlin_pars])
       names(nlin_init) <- nlin_pars
 
       ptimeNLS <- system.time({
