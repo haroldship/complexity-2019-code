@@ -13,16 +13,16 @@ x0 <- c(0.9, 0.9)
 names(x0) <- vars
 library("simode")
 
-priorInf=c(0.1,1,2,3)
+priorInf=c(0.1,0.2,0.3,0.4)
 
 n <- 100
 time <- seq(0,25,length.out=n)
 model_out <- solve_ode(equations,theta,x0,time)
-plot(model_out)
+# plot(model_out)
 
 x_det <- model_out[,vars]
 
-SNR <- 10
+SNR <- 5
 sigma_x <- apply(x_det, 2, sd)
 sigma <- signif(sigma_x / SNR, digits=2)
 print(sigma)
@@ -39,16 +39,16 @@ nlin_init <- sapply(nlin_init, max, 0)
 nlin_init <- sapply(nlin_init, min, 1)
 names(nlin_init) <- nlin_pars
 
-par(mfrow=c(1,2))
-plot(time,model_out[,2],'l', ylab="X")
-points(time,obs$X)
-
-plot(time,model_out[,3],'l', ylab="Y")
-points(time,obs$Y)
+# par(mfrow=c(1,2))
+# plot(time,model_out[,2],'l', ylab="X")
+# points(time,obs$X)
+# 
+# plot(time,model_out[,3],'l', ylab="Y")
+# points(time,obs$Y)
 
 lower <- c(0, 0)
 names(lower) <- nlin_pars
-upper <- c(1, 4)
+upper <- c(1, 1)
 names(upper) <- nlin_pars
 
 # NLSmc <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
@@ -63,7 +63,7 @@ names(upper) <- nlin_pars
 # plot(SLSmc, type='fit', pars_true=theta, mfrow=c(1,2), legend=T)
 
 
-N <- 500
+N <- 100
 set.seed(1000)
 library(doRNG)
 require(doParallel)
@@ -83,19 +83,32 @@ for(ip in 1:4){
     
     nlin_init <- rnorm(length(theta[nlin_pars]),theta[nlin_pars],
                        + priorInf[ip]*theta[nlin_pars])
-    nlin_init <- pmax(nlin_init, lower)
-    nlin_init <- pmin(nlin_init, upper)
+    nlin_init <- pmax(nlin_init, 0.95*lower)
+    nlin_init <- pmin(nlin_init, 0.95*upper)
     names(nlin_init) <- nlin_pars
     
-    ptimeNLS <- system.time({
-      NLSmc <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
-                      nlin_pars=nlin_pars, start=nlin_init, lower=lower, upper=upper,
-                      im_method = "non-separable",
-                      simode_ctrl=simode.control(optim_type = "im", im_optim_method = "Nelder-Mead"))})
-    ptimeSLS <- system.time({
-      SLSmc <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
-                      nlin_pars=nlin_pars, start=nlin_init, lower=lower, upper=upper,
-                      simode_ctrl=simode.control(optim_type = "im", im_optim_method = "Nelder-Mead"))})
+    while (TRUE) {
+      ptimeNLS <- system.time({
+        NLSmc <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
+                        nlin_pars=nlin_pars, start=nlin_init, lower=lower, upper=upper,
+                        im_method = "non-separable",
+                        simode_ctrl=simode.control(optim_type = "im", im_optim_method = "Nelder-Mead"))})
+      if (is.null(NLSmc) || !is.numeric(NLSmc$im_pars_est)) {
+        print("should repeat NLS call")
+        next
+      }
+      
+      ptimeSLS <- system.time({
+        SLSmc <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
+                        nlin_pars=nlin_pars, start=nlin_init, lower=lower, upper=upper,
+                        simode_ctrl=simode.control(optim_type = "im", im_optim_method = "Nelder-Mead"))})
+      if (is.null(SLSmc) || !is.numeric(SLSmc$im_pars_est)) {
+        print("should repeat SLS call")
+        next
+      }
+      break
+      
+    }
     
     list(NLSmc=NLSmc,SLSmc=SLSmc,ptimeNLS=ptimeNLS,ptimeSLS=ptimeSLS)
   }
