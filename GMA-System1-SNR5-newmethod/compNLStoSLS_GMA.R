@@ -4,10 +4,6 @@ library(doRNG)
 require(doParallel)
 set.seed(2000)
 
-SNR <- 10
-n <- 100
-priorInf=c(0.1,1,2,3)
-
 vars <- paste0('x', 1:3)
 
 eq1 <- 'gamma11*(x2^f121)*(x3^f131)-gamma12*(x1^f112)*(x2^f122)-gamma13*(x1^f113)*(x3^f133)'
@@ -32,11 +28,13 @@ names(theta) <- pars
 x0 <- c(0.5,0.5,1)
 names(x0) <- vars
 
+n <- 100
 time <- seq(0,4,length.out=n)
 
 model_out <- solve_ode(equations,theta,x0,time)
 x_det <- model_out[,vars]
 
+SNR <- 10
 sigma_x <- apply(x_det, 2, sd)
 sigma <- signif(sigma_x / SNR, digits=2)
 
@@ -48,49 +46,45 @@ for(i in 1:length(vars)) {
 }
 names(obs) <- vars
 
-# pdf(file="../out/solution-gma-SNR10.pdf")
-# par(mfrow=c(1,1))
-# plot(time,model_out[,'x1'],'l',ylab="",ylim=c(0,1.5), main=expression(GMA~System~with~SNR==10))
-# lines(time,model_out[,'x2'])
-# lines(time,model_out[,'x3'])
-# points(time,obs$x1,pch=1)
-# points(time,obs$x2,pch=2)
-# points(time,obs$x3,pch=4)
-# dev.off()
+pdf(file="../out/solution-gma-SNR10.pdf")
+par(mfrow=c(1,1))
+plot(time,model_out[,'x1'],'l',ylab="",ylim=c(0,1.5), main=expression(GMA~System~with~SNR==10))
+lines(time,model_out[,'x2'])
+lines(time,model_out[,'x3'])
+points(time,obs$x1,pch=1)
+points(time,obs$x2,pch=2)
+points(time,obs$x3,pch=4)
+dev.off()
 
-lower <- c(0, -1.5, -1.5, 0, 0, -1.5, 0, 0, -1.5, 0, 0, -1.5, 0, 0, 0, 0, -1.5, 0, 0)
-names(lower) <- pars
-nlin_lower <- lower[nlin_pars]
-upper <- c(6, 0, 0, 6, 1.5, 0, 6, 1.5, 0, 6, 1, 0, 6, 1.5, 6, 1.5, 0, 6, 1.5)
-names(upper) <- pars
-nlin_upper <- upper[nlin_pars]
+pars_min <- c(0, -1.1, -1.1, 0, 0, -1.1, 0, 0, -1.1, 0, 0, -1.1, 0, 0, 0, 0, -1.1, 0, 0)
+#pars_min <- pars_min * 2
+names(pars_min) <- pars
+pars_max <- c(6, 0, 0, 6, 1, 0, 6, 1, 0, 6, 1, 0, 6, 1, 6, 1, 0, 6, 1)
+#pars_max <- pars_max * 2
+names(pars_max) <- pars
 
-nlin_init <- rnorm(length(theta[nlin_pars]),theta[nlin_pars],
-                   + priorInf[1]*abs(theta[nlin_pars]))
-names(nlin_init) <- nlin_pars
-lin_init <- rnorm(length(theta[lin_pars]),theta[lin_pars],
-                  + priorInf[2]*abs(theta[lin_pars]))
-names(lin_init) <- lin_pars
-init <- c(lin_init, nlin_init)
+priorInf=c(0.1,1,3,5)
 
-NLSest <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
-                 nlin_pars=nlin_pars,
-                 lower=lower, upper=upper, start=init,
-                 im_method = "non-separable",
-                 simode_ctrl=simode.control(optim_type = "im"))
-SLSest <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
-                 nlin_pars=nlin_pars,
-                 lower=nlin_lower, upper=nlin_upper, start=nlin_init,
-                 simode_ctrl=simode.control(optim_type = "im"))
-
-par(mfrow=c(1,3))
-plot(NLSest, type="fit", show="im")
-plot(SLSest, type="fit", show="im")
+# nlin_init <- rnorm(length(theta[nlin_pars]),theta[nlin_pars],
+#                    + priorInf[1]*abs(theta[nlin_pars]))
+# names(nlin_init) <- nlin_pars
+# 
+# NLSest <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
+#        nlin_pars=nlin_pars, start=nlin_init, lower=pars_min, upper=pars_max,
+#        im_method = "non-separable",
+#        simode_ctrl=simode.control(optim_type = "im"))
+# par(mfrow=c(1,3))
+# plot(NLSest, type="fit", show="im")
+# SLSest <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
+#                  nlin_pars=nlin_pars, start=nlin_init, lower=pars_min, upper=pars_max,
+#                  simode_ctrl=simode.control(optim_type = "im"))
+# plot(SLSest, type="fit", show="im")
 
 unlink("log")
-N <- 50
+N <- 500
 set.seed(1000)
-registerDoParallel(cores=16)
+cl <- makeForkCluster(16, outfile="log")
+registerDoParallel(cl)
 
 args <- c('equations', 'pars', 'time', 'x0', 'theta',
           'nlin_pars', 'x_det', 'vars', 'sigma')
@@ -101,7 +95,7 @@ results <- list()
 for(ip in 1:4){
   
   results <- foreach(j=1:N, .packages='simode') %dorng% {
-    # for(j in 1:N) {
+  # for(j in 1:N) {
     
     SLSmc <- NULL
     NLSmc <- NULL
@@ -115,17 +109,13 @@ for(ip in 1:4){
       names(obs) <- vars
       
       nlin_init <- rnorm(length(theta[nlin_pars]),theta[nlin_pars],
-                         + priorInf[1]*abs(theta[nlin_pars]))
+                         + priorInf[ip]*abs(theta[nlin_pars]))
       names(nlin_init) <- nlin_pars
-      lin_init <- rnorm(length(theta[lin_pars]),theta[lin_pars],
-                        + priorInf[ip]*abs(theta[lin_pars]))
-      names(lin_init) <- lin_pars
-      init <- c(lin_init, nlin_init)
-      
+
       ptimeNLS <- system.time({
         NLSmc <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
-                        nlin_pars=nlin_pars,
-                        lower=lower, upper=upper, start=init,
+                        nlin_pars=nlin_pars, start=nlin_init,
+                        lower=pars_min, upper=pars_max,
                         im_method = "non-separable",
                         simode_ctrl=simode.control(optim_type = "im"))})
       if (is.null(NLSmc) || !is.numeric(NLSmc$im_pars_est)) {
@@ -134,8 +124,8 @@ for(ip in 1:4){
       }
       ptimeSLS <- system.time({
         SLSmc <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
-                        nlin_pars=nlin_pars,
-                        lower=nlin_lower, upper=nlin_upper, start=nlin_init,
+                        nlin_pars=nlin_pars, start=nlin_init,
+                        lower=pars_min, upper=pars_max,
                         simode_ctrl=simode.control(optim_type = "im"))})
       if (is.null(SLSmc) || !is.numeric(SLSmc$im_pars_est)) {
         print("should repeat SLS call")
@@ -145,7 +135,7 @@ for(ip in 1:4){
     }
     
     #print(paste0("NLS num:", is.numeric(NLSmc$im_pars_est), " SLS num:", is.numeric(SLSmc$im_pars_est), " num NLS:", length(NLSmc$im_pars_est), " num SLS:", length(SLSmc$im_pars_est)))
-    
+
     list(NLSmc=NLSmc,SLSmc=SLSmc,ptimeNLS=ptimeNLS,ptimeSLS=ptimeSLS)
     #results[[j]] <- list(NLSmc=NLSmc,SLSmc=SLSmc,ptimeNLS=ptimeNLS,ptimeSLS=ptimeSLS)
   }

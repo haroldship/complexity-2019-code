@@ -4,7 +4,7 @@ library(doRNG)
 require(doParallel)
 set.seed(2000)
 
-SNR <- 10
+SNR <- 5
 n <- 100
 priorInf=c(0.1,1,2,3)
 
@@ -101,7 +101,7 @@ results <- list()
 for(ip in 1:4){
   
   results <- foreach(j=1:N, .packages='simode') %dorng% {
-    # for(j in 1:N) {
+  # for(j in 1:N) {
     
     SLSmc <- NULL
     NLSmc <- NULL
@@ -121,7 +121,7 @@ for(ip in 1:4){
                         + priorInf[ip]*abs(theta[lin_pars]))
       names(lin_init) <- lin_pars
       init <- c(lin_init, nlin_init)
-      
+
       ptimeNLS <- system.time({
         NLSmc <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
                         nlin_pars=nlin_pars,
@@ -145,7 +145,7 @@ for(ip in 1:4){
     }
     
     #print(paste0("NLS num:", is.numeric(NLSmc$im_pars_est), " SLS num:", is.numeric(SLSmc$im_pars_est), " num NLS:", length(NLSmc$im_pars_est), " num SLS:", length(SLSmc$im_pars_est)))
-    
+
     list(NLSmc=NLSmc,SLSmc=SLSmc,ptimeNLS=ptimeNLS,ptimeSLS=ptimeSLS)
     #results[[j]] <- list(NLSmc=NLSmc,SLSmc=SLSmc,ptimeNLS=ptimeNLS,ptimeSLS=ptimeSLS)
   }
