@@ -28,25 +28,20 @@ time <- 1:n
 
 x0 <- c(S0,I0)
 names(x0) <- vars
-
+sigma <- c(1e-2)
 priorInf=c(0.1,1,3,5)
 
 model_out <- solve_ode(equations,theta,x0,time)
 plot(model_out)
+
 x_det <- model_out[,vars]
-
-SNR <- 10
-sigma_x <- apply(x_det, 2, sd)
-sigma <- signif(sigma_x / SNR, digits=2)
-print(sigma)
-
 pars <- c('beta1_1', "S1_1")
 lin_pars <- c('beta1_1')
 nlin_pars <- setdiff(pars,lin_pars)
 
 obs <- list()
 for(i in 1:length(vars)) {
-  obs[[i]] <- x_det[,i] + rnorm(n,0,sigma[i])
+  obs[[i]] <- x_det[,i] + rnorm(n,0,sigma)
 }
 names(obs) <- vars
 
@@ -95,7 +90,7 @@ for(ip in 1:4){
     # for(j in 1:N) {
     obs <- list()
     for(i in 1:length(vars)) {
-      obs[[i]] <- x_det[,i] + rnorm(n,0,sigma[i])
+      obs[[i]] <- x_det[,i] + rnorm(n,0,0.001)
     }
     names(obs) <- vars
 
