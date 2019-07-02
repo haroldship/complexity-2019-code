@@ -66,10 +66,10 @@ names(upper) <- pars
 nlin_upper <- upper[nlin_pars]
 
 nlin_init <- rnorm(length(theta[nlin_pars]),theta[nlin_pars],
-                   + priorInf[1]*abs(theta[nlin_pars]))
+                   priorInf[1]*abs(theta[nlin_pars]))
 names(nlin_init) <- nlin_pars
 lin_init <- rnorm(length(theta[lin_pars]),theta[lin_pars],
-                  + priorInf[2]*abs(theta[lin_pars]))
+                  priorInf[2]*abs(theta[lin_pars]))
 names(lin_init) <- lin_pars
 init <- c(lin_init, nlin_init)
 
@@ -135,7 +135,7 @@ for(ip in 1:4){
       ptimeSLS <- system.time({
         SLSmc <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
                         nlin_pars=nlin_pars,
-                        lower=nlin_lower, upper=nlin_upper, start=nlin_init,
+                        lower=lower, upper=upper, start=nlin_init,
                         simode_ctrl=simode.control(optim_type = "im"))})
       if (is.null(SLSmc) || !is.numeric(SLSmc$im_pars_est)) {
         print("should repeat SLS call")

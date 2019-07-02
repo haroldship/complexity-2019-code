@@ -135,7 +135,7 @@ for(ip in 1:4){
       ptimeSLS <- system.time({
         SLSmc <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
                         nlin_pars=nlin_pars,
-                        lower=nlin_lower, upper=nlin_upper, start=nlin_init,
+                        lower=lower, upper=upper, start=nlin_init,
                         simode_ctrl=simode.control(optim_type = "im"))})
       if (is.null(SLSmc) || !is.numeric(SLSmc$im_pars_est)) {
         print("should repeat SLS call")

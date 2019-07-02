@@ -94,7 +94,7 @@ for(ip in 1:4){
                        + priorInf[1]*abs(theta[nlin_pars]))
     names(nlin_init) <- nlin_pars
     lin_init <- rnorm(length(theta[lin_pars]),theta[lin_pars],
-                      + priorInf[2]*abs(theta[lin_pars]))
+                      + priorInf[ip]*abs(theta[lin_pars]))
     names(lin_init) <- lin_pars
     init <- c(lin_init, nlin_init)
     
