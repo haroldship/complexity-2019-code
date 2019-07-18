@@ -100,8 +100,7 @@ nlin_upper <- upper[nlin_pars]
 #plot(SLSest, type="fit", show="im")
 
 #unlink("log")
-N <- 100
-set.seed(123)
+N <- 500
 registerDoParallel(cores=16)
 
 args <- c('equations', 'pars', 'time', 'x0', 'theta',
@@ -110,7 +109,9 @@ args <- c('equations', 'pars', 'time', 'x0', 'theta',
 
 results <- list()
 
-for(ip in 1:3){
+for(ip in 3:3){
+
+  set.seed(123)
   
   results <- foreach(j=1:N, .packages='simode') %dorng% {
     # for(j in 1:N) {
@@ -135,12 +136,7 @@ for(ip in 1:3){
       init <- c(lin_init, nlin_init)
       
       ptimeNLS <- system.time({
-        #NLSmc <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
-        #                nlin_pars=nlin_pars,
-        #                lower=lower, upper=upper, start=init,
-        #                im_method = "non-separable",
-        #                simode_ctrl=simode.control(optim_type = "im"))})
-      NLSmc <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
+        NLSmc <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
                       nlin_pars=nlin_pars,
                       start=init,lower=nlin_lower, upper=nlin_upper,
                       im_method = "non-separable",

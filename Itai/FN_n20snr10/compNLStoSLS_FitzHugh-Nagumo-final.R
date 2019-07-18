@@ -2,7 +2,7 @@ rm(list=ls())
 library(simode)
 set.seed(1000)
 
-n <- 40
+n <- 20
 SNR <- 10
 priorInf=c(0.1,1,2)
 

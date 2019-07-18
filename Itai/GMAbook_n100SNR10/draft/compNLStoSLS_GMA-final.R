@@ -5,7 +5,7 @@ require(doParallel)
 #set.seed(2000)
 
 SNR <- 10
-n <- 200
+n <- 100
 priorInf=c(0.1,0.3,0.5)
 #priorInf=c(0.1)
 
@@ -100,8 +100,8 @@ nlin_upper <- upper[nlin_pars]
 #plot(SLSest, type="fit", show="im")
 
 #unlink("log")
-N <- 500
-set.seed(123)
+N <- 2
+
 registerDoParallel(cores=16)
 
 args <- c('equations', 'pars', 'time', 'x0', 'theta',
@@ -110,11 +110,20 @@ args <- c('equations', 'pars', 'time', 'x0', 'theta',
 
 results <- list()
 
-for(ip in 2:3){
+for(ip in 1:3){
+  
+  set.seed(1000)
+  
+  nlin_init <- rnorm(length(theta[nlin_pars]),theta[nlin_pars],
+                     + 0.001*abs(theta[nlin_pars]))
+  names(nlin_init) <- nlin_pars
+  lin_init <- rnorm(length(theta[lin_pars]),theta[lin_pars],
+                    + priorInf[ip]*abs(theta[lin_pars]))
+  names(lin_init) <- lin_pars
+  init <- c(lin_init, nlin_init)
   
   set.seed(123)
-
-    results <- foreach(j=1:N, .packages='simode') %dorng% {
+  results <- foreach(j=1:N, .packages='simode') %dorng% {
     # for(j in 1:N) {
     
     SLSmc <- NULL
@@ -128,13 +137,7 @@ for(ip in 2:3){
       }
       names(obs) <- vars
       
-      nlin_init <- rnorm(length(theta[nlin_pars]),theta[nlin_pars],
-                         + 0.001*abs(theta[nlin_pars]))
-      names(nlin_init) <- nlin_pars
-      lin_init <- rnorm(length(theta[lin_pars]),theta[lin_pars],
-                        + priorInf[ip]*abs(theta[lin_pars]))
-      names(lin_init) <- lin_pars
-      init <- c(lin_init, nlin_init)
+      
       
       ptimeNLS <- system.time({
         #NLSmc <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,

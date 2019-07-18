@@ -100,7 +100,7 @@ nlin_upper <- upper[nlin_pars]
 #plot(SLSest, type="fit", show="im")
 
 #unlink("log")
-N <- 100
+N <- 500
 set.seed(123)
 registerDoParallel(cores=16)
 
@@ -112,7 +112,9 @@ results <- list()
 
 for(ip in 1:3){
   
-  results <- foreach(j=1:N, .packages='simode') %dorng% {
+  set.seed(123)
+
+    results <- foreach(j=1:N, .packages='simode') %dorng% {
     # for(j in 1:N) {
     
     SLSmc <- NULL

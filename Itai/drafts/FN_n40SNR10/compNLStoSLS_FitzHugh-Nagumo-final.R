@@ -2,9 +2,9 @@ rm(list=ls())
 library(simode)
 set.seed(1000)
 
-n <- 40
+n <- 100
 SNR <- 10
-priorInf=c(0.1,1,2)
+priorInf=c(1,2.5,4)
 
 V <- 'c*(V-V^3/3+R)'
 R <- '-(V - a + b*R)/c'
@@ -44,28 +44,29 @@ names(nlin_init) <- nlin_pars
 
 # estNS <- simode(equations=equations, pars=pars, time=time, obs=obs,
 #               fixed=x0, nlin=nlin_pars,
-#               start=nlin_init, 
+#               start=nlin_init,
 #               im_method = "non-separable",
 #               simode_ctrl=simode.control(optim_type = "im"))
 # summary(estNS)
 # plot(estNS, type='fit', pars_true=theta, mfrow=c(2,1), legend=TRUE)
 # estS <- simode(equations=equations, pars=pars, time=time, obs=obs,
 #                 fixed=x0, nlin=nlin_pars,
-#                 start=nlin_init, 
+#                 start=nlin_init,
 #                 simode_ctrl=simode.control(optim_type = "im"))
 # summary(estS)
 # plot(estS, type='fit', pars_true=theta, mfrow=c(2,1), legend=TRUE)
 
-nlin_lower <- rep(0, length(nlin_pars))
+nlin_lower <- rep(1, length(nlin_pars))
 names(nlin_lower) <- nlin_pars
-lower <- rep(0.0,length(pars))
+lower <- rep(0,length(pars))
 names(lower) <- pars
-nlin_upper <- rep(10, length(nlin_pars))
+nlin_upper <- rep(5, length(nlin_pars))
 names(nlin_upper) <- nlin_pars
-upper <- c(rep(2, length(lin_pars)), nlin_upper)
+upper <- c(nlin_upper, rep(1, length(lin_pars)))
 names(upper) <- pars
 
-N <- 500
+N <- 100
+set.seed(1000)
 library(doRNG)
 require(doParallel)
 registerDoParallel(cores=16)
@@ -73,71 +74,53 @@ registerDoParallel(cores=16)
 args <- c('equations', 'pars', 'time', 'x0', 'theta', 'obs',
           'vars', 'x_det', 'vars', 'sigma')
 
-set.seed(1000)
-
-sls_results <- foreach(j=1:N, .packages='simode', .export=args) %dorng% {
-  # for(j in 1:N) {
-  obs <- list()
-  for(i in 1:length(vars)) {
-    obs[[i]] <- x_det[,i] + rnorm(n,0,sigma)
-  }
-  names(obs) <- vars
-  
-  nlin_init <- rnorm(length(theta[nlin_pars]),theta[nlin_pars],
-                     + priorInf[1]*theta[nlin_pars])
-  names(nlin_init) <- nlin_pars
-
-  ptimeSLS <- system.time({
-    SLSmc <- simode(equations=equations, pars=pars, time=time, obs=obs,
-                    fixed=x0, nlin=nlin_pars,
-                    lower=nlin_lower, upper=nlin_upper, start=nlin_init,
-                    simode_ctrl=simode.control(optim_type = "im"))})
-  
-  list(SLSmc=SLSmc,ptimeSLS=ptimeSLS)
-}
-
-for(ip in 1:length(priorInf)) {
-  
-  set.seed(1000)
+for(ip in 1:length(priorInf)){
   
   results <- foreach(j=1:N, .packages='simode', .export=args) %dorng% {
     # for(j in 1:N) {
     obs <- list()
     for(i in 1:length(vars)) {
-      obs[[i]] <- x_det[,i] + rnorm(n,0,sigma)
+      obs[[i]] <- x_det[,i] + rnorm(n,0,sigma[i])
     }
     names(obs) <- vars
     
     nlin_init <- rnorm(length(theta[nlin_pars]),theta[nlin_pars],
-                       + priorInf[1]*theta[nlin_pars])
+                       + 0.1*abs(theta[nlin_pars]))
     names(nlin_init) <- nlin_pars
-    lin_init <- rnorm(length(lin_pars),theta[lin_pars],priorInf[ip]*theta[lin_pars])
+    lin_init <- rnorm(length(theta[lin_pars]),theta[lin_pars],
+                      + priorInf[ip]*abs(theta[lin_pars]))
     names(lin_init) <- lin_pars
     init <- c(lin_init, nlin_init)
-    #names(init) <- pars
+    names(init) <- pars
     
+
     ptimeNLS <- system.time({
       NLSmc <- simode(equations=equations, pars=pars, time=time, obs=obs,
                       fixed=x0, nlin=nlin_pars,
-                      lower=lower, upper=upper, start=init,
+                      start=init,lower=nlin_lower, upper=nlin_upper,
                       im_method = "non-separable",
                       simode_ctrl=simode.control(optim_type = "im"))})
-
-    list(NLSmc=NLSmc,ptimeNLS=ptimeNLS)
+    ptimeSLS <- system.time({
+      SLSmc <- simode(equations=equations, pars=pars, time=time, obs=obs,
+                      fixed=x0, nlin=nlin_pars,
+                      start=nlin_init,lower=nlin_lower, upper=nlin_upper,
+                      simode_ctrl=simode.control(optim_type = "im"))})
+    
+    list(NLSmc=NLSmc,SLSmc=SLSmc,ptimeNLS=ptimeNLS,ptimeSLS=ptimeSLS)
   }
   
   
   NLSmc_im_loss_vals <- sapply(results,function(x) x$NLSmc$im_loss)
-  SLSmc_im_loss_vals <- sapply(sls_results,function(x) x$SLSmc$im_loss)
+  SLSmc_im_loss_vals <- sapply(results,function(x) x$SLSmc$im_loss)
   NLS_im_vars=sapply(results,function(x) x$NLSmc$im_pars_est)
-  SLS_im_vars=sapply(sls_results,function(x) x$SLSmc$im_pars_est)
+  SLS_im_vars=sapply(results,function(x) x$SLSmc$im_pars_est)
   NLSmc_time=list()
   SLSmc_time=list()
   NLSmc_sse=list()
   SLSmc_sse=list()
   for (mc in 1:N){
     NLSmc_time[mc]<-  results[[mc]]$ptimeNLS[3]
-    SLSmc_time[mc]<-  sls_results[[mc]]$ptimeSLS[3]
+    SLSmc_time[mc]<-  results[[mc]]$ptimeSLS[3]
   }
   #mean(unlist(NLSmc_im_loss_vals))
   #mean(unlist(SLSmc_im_loss_vals))

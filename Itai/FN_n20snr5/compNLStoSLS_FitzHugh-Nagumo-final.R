@@ -2,8 +2,8 @@ rm(list=ls())
 library(simode)
 set.seed(1000)
 
-n <- 40
-SNR <- 10
+n <- 20
+SNR <- 5
 priorInf=c(0.1,1,2)
 
 V <- 'c*(V-V^3/3+R)'
