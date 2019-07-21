@@ -26,7 +26,7 @@ SLS_Nlin_mse <- c(mean((d1$SLSest_c - theta['c'])^2),mean((d2$SLSest_c - theta['
 
 DF <- rbind(signif(NLS_Lin_mse / SLS_Lin_mse, 2), signif(NLS_Nlin_mse / SLS_Nlin_mse, 2))
 DF <- cbind(c("Linear", "Nonlinear"), DF)
-colnames(DF) <- c("Parameters", "high", "good", "reasonable", "low")
+colnames(DF) <- c("Parameters", "high", "medium", "low")
 rownames(DF) <- c("","")
 
 for (j in 1:2) {
