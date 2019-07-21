@@ -4,7 +4,7 @@ set.seed(1000)
 
 n <- 40
 SNR <- 10
-priorInf=c(0.1,1,2)
+priorInf=c(0.1,0.3,0.5)
 
 V <- 'c*(V-V^3/3+R)'
 R <- '-(V - a + b*R)/c'
@@ -58,11 +58,11 @@ names(nlin_init) <- nlin_pars
 
 nlin_lower <- rep(0, length(nlin_pars))
 names(nlin_lower) <- nlin_pars
-lower <- rep(0,length(pars))
+lower <- rep(0.0,length(pars))
 names(lower) <- pars
 nlin_upper <- rep(10, length(nlin_pars))
 names(nlin_upper) <- nlin_pars
-upper <- c(nlin_upper, rep(1, length(lin_pars)))
+upper <- c(rep(1, length(lin_pars)), nlin_upper)
 names(upper) <- pars
 
 N <- 500
@@ -75,7 +75,7 @@ args <- c('equations', 'pars', 'time', 'x0', 'theta', 'obs',
 
 set.seed(1000)
 
-nlin_results <- foreach(j=1:N, .packages='simode', .export=args) %dorng% {
+sls_results <- foreach(j=1:N, .packages='simode', .export=args) %dorng% {
   # for(j in 1:N) {
   obs <- list()
   for(i in 1:length(vars)) {
@@ -112,8 +112,9 @@ for(ip in 1:length(priorInf)) {
                        + priorInf[1]*theta[nlin_pars])
     names(nlin_init) <- nlin_pars
     lin_init <- rnorm(length(lin_pars),theta[lin_pars],priorInf[ip]*theta[lin_pars])
+    names(lin_init) <- lin_pars
     init <- c(lin_init, nlin_init)
-    names(init) <- pars
+    #names(init) <- pars
     
     ptimeNLS <- system.time({
       NLSmc <- simode(equations=equations, pars=pars, time=time, obs=obs,
@@ -127,16 +128,16 @@ for(ip in 1:length(priorInf)) {
   
   
   NLSmc_im_loss_vals <- sapply(results,function(x) x$NLSmc$im_loss)
-  SLSmc_im_loss_vals <- sapply(nlin_results,function(x) x$SLSmc$im_loss)
+  SLSmc_im_loss_vals <- sapply(sls_results,function(x) x$SLSmc$im_loss)
   NLS_im_vars=sapply(results,function(x) x$NLSmc$im_pars_est)
-  SLS_im_vars=sapply(nlin_results,function(x) x$SLSmc$im_pars_est)
+  SLS_im_vars=sapply(sls_results,function(x) x$SLSmc$im_pars_est)
   NLSmc_time=list()
   SLSmc_time=list()
   NLSmc_sse=list()
   SLSmc_sse=list()
   for (mc in 1:N){
     NLSmc_time[mc]<-  results[[mc]]$ptimeNLS[3]
-    SLSmc_time[mc]<-  nlin_results[[mc]]$ptimeSLS[3]
+    SLSmc_time[mc]<-  sls_results[[mc]]$ptimeSLS[3]
   }
   #mean(unlist(NLSmc_im_loss_vals))
   #mean(unlist(SLSmc_im_loss_vals))
