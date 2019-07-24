@@ -109,7 +109,7 @@ args <- c('equations', 'pars', 'time', 'x0', 'theta',
 
 results <- list()
 
-for(ip in 1:2){
+for(ip in 1:3){
 
   set.seed(123)
   

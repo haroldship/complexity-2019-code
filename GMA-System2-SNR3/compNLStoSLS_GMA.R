@@ -1,8 +1,9 @@
 rm(list=ls())
 library(simode)
-library(doRNG)
-require(doParallel)
-set.seed(2000)
+
+n <- 100
+SNR <- 10
+priorInf=c(0.1,0.2,0.5)
 
 vars <- paste0('Z', 1:34)
 
@@ -146,170 +147,156 @@ time <- seq(0,1,length.out=n)
 model_out <- solve_ode(equations,theta,x0,time)
 x_det <- model_out[,vars]
 
-SNR <- 3
 sigma_x <- apply(x_det, 2, sd)
 sigma <- signif(sigma_x / SNR, digits=2)
-
 print(sigma)
 
-obs <- list()
-for(i in 1:length(vars)) {
-  obs[[i]] <- x_det[,i] + rnorm(n,0,sigma[i])
-}
-names(obs) <- vars
+lin_lower <- rep(0, length(lin_pars))
+names(lin_lower) <- lin_pars
+lin_upper <- rep(1, length(lin_pars))
+names(lin_upper) <- lin_pars
 
-# v1 <- 'alpha1*(Z1^g11)*(Z2^g21)*Z17'
-V1 <- theta['alpha1']*(x_det[,'Z1']^theta['g11'])*(x_det[,'Z2']^theta['g21'])*x_det[,'Z17']
-V1_hat <- theta['alpha1']*(obs$Z1^theta['g11'])*(obs$Z2^theta['g21'])*obs$Z17
+nlin_lower <- ifelse(theta[nlin_pars] >= 0, 0, -1.5)
+names(nlin_lower) <- nlin_pars
+nlin_upper <- ifelse(theta[nlin_pars] >= 0, 1.5, 0)
+names(nlin_upper) <- nlin_pars
 
-# v4 <- 'alpha4*(Z3^g34)*(Z4^g44)*Z20'
-V4 <- theta['alpha4']*(x_det[,'Z3']^theta['g34'])*(x_det[,'Z4']^theta['g44'])*x_det[,'Z20']
-V4_hat <- theta['alpha4']*(obs$Z3^theta['g34'])*(obs$Z4^theta['g44'])*obs$Z20
+lower <- c(lin_lower, nlin_lower)
+upper <- c(lin_upper, nlin_upper)
 
-# v7 <- 'alpha7*(Z6^g67)*Z23'
-V7 <- theta['alpha7']*(x_det[,'Z6']^theta['g67'])*x_det[,'Z23']
-V7_hat <- theta['alpha7']*(obs$Z6^theta['g67'])*obs$Z23
-
-# v9 <- 'alpha9*(Z4^g49)*(Z7^g79)*Z25'
-V9 <- theta['alpha9']*(x_det[,'Z4']^theta['g49'])*(x_det[,'Z7']^theta['g79'])*x_det[,'Z25']
-V9_hat <- theta['alpha9']*(obs$Z4^theta['g49'])*(obs$Z7^theta['g79'])*obs$Z25
-
-# v17 <- 'alpha17*(Z12^g1217)*Z29'
-V17 <- theta['alpha17']*(x_det[,'Z12']^theta['g1217'])*x_det[,'Z29']
-V17_hat <- theta['alpha17']*(obs$Z12^theta['g1217'])*obs$Z29
-
-par(mfrow=c(2,2))
-plot(time, V4,'l', ylab="V4", ylim=c(0,1.10))
-#points(time, V4_hat, pch=1)
-plot(time, V7,'l', ylab="V7", ylim=c(0,1.10))
-#points(time, V7_hat, pch=1)
-plot(time, V9,'l', ylab="V9", ylim=c(0,1.10))
-#points(time, V9_hat, pch=1)
-plot(time, V17,'l', ylab="V17", ylim=c(0,1.10))
-#points(time, V17_hat, pch=1)
-
-
-pars_min <- c(0, -1.1, -1.1, 0, 0, -1.1, 0, 0, -1.1, 0, 0, -1.1, 0, 0, 0, 0, -1.1, 0, 0)
-#pars_min <- pars_min * 2
-names(pars_min) <- pars
-pars_max <- c(6, 0, 0, 6, 1, 0, 6, 1, 0, 6, 1, 0, 6, 1, 6, 1, 0, 6, 1)
-#pars_max <- pars_max * 2
-names(pars_max) <- pars
-
-priorInf=c(0.1,1,3,5)
-
-nlin_init <- rnorm(length(theta[nlin_pars]),theta[nlin_pars],
-                   + priorInf[1]*abs(theta[nlin_pars]))
-names(nlin_init) <- nlin_pars
-
-NLSest <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
-       nlin_pars=nlin_pars, start=nlin_init, lower=pars_min, upper=pars_max,
-       im_method = "non-separable",
-       simode_ctrl=simode.control(optim_type = "im"))
-par(mfrow=c(1,3))
-plot(NLSest, type="fit", show="im")
-SLSest <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
-                 nlin_pars=nlin_pars, start=nlin_init, lower=pars_min, upper=pars_max,
-                 simode_ctrl=simode.control(optim_type = "im"))
-plot(SLSest, type="fit", show="im")
-
-unlink("log")
 N <- 50
-set.seed(1000)
-cl <- makeForkCluster(8, outfile="log")
-registerDoParallel(cl)
-
+library(doRNG)
+require(doParallel)
+registerDoParallel(cores=16)
 args <- c('equations', 'pars', 'time', 'x0', 'theta',
           'nlin_pars', 'x_det', 'vars', 'sigma')
 
-
-results <- list()
-
-for(ip in 1:4){
-  
-  results <- foreach(j=1:N, .packages='simode') %dorng% {
+set.seed(1000)
+sls_results <- foreach(j=1:N, .packages='simode', .export=args) %dorng% {
   # for(j in 1:N) {
-    
-    SLSmc <- NULL
-    NLSmc <- NULL
-    
-    while (TRUE) {
-      #print("beginloop")
-      obs <- list()
-      for(i in 1:length(vars)) {
-        obs[[i]] <- x_det[,i] + rnorm(n,0,sigma[i])
-      }
-      names(obs) <- vars
-      
-      nlin_init <- rnorm(length(theta[nlin_pars]),theta[nlin_pars],
-                         + priorInf[ip]*abs(theta[nlin_pars]))
-      names(nlin_init) <- nlin_pars
+  obs <- list()
+  for(i in 1:length(vars)) {
+    obs[[i]] <- x_det[,i] + rnorm(n,0,sigma)
+  }
+  names(obs) <- vars
+  
+  nlin_init <- rnorm(length(theta[nlin_pars]),theta[nlin_pars],
+                     + priorInf[1]*abs(theta[nlin_pars]))
+  names(nlin_init) <- nlin_pars
+  
+  ptimeSLS <- system.time({
+    SLSmc <- simode(equations=equations, pars=pars, time=time, obs=obs,
+                    fixed=x0, nlin=nlin_pars,
+                    lower=nlin_lower, upper=nlin_upper, start=nlin_init,
+                    simode_ctrl=simode.control(optim_type = "im"))})
+  
+  list(SLSmc=SLSmc,ptimeSLS=ptimeSLS)
+}
 
-      ptimeNLS <- system.time({
-        NLSmc <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
-                        nlin_pars=nlin_pars, start=nlin_init,
-                        lower=pars_min, upper=pars_max,
-                        im_method = "non-separable",
-                        simode_ctrl=simode.control(optim_type = "im"))})
-      if (is.null(NLSmc) || !is.numeric(NLSmc$im_pars_est)) {
-        print("should repeat NLS call")
-        next
-      }
-      ptimeSLS <- system.time({
-        SLSmc <- simode(equations=equations, pars=pars, fixed=x0, time=time, obs=obs,
-                        nlin_pars=nlin_pars, start=nlin_init,
-                        lower=pars_min, upper=pars_max,
-                        simode_ctrl=simode.control(optim_type = "im"))})
-      if (is.null(SLSmc) || !is.numeric(SLSmc$im_pars_est)) {
-        print("should repeat SLS call")
-        next
-      }
-      break
+for(ip in 1:3){
+  
+  set.seed(1000)
+  
+  results <- foreach(j=1:N, .packages='simode', .export=args) %dorng% {
+    # for(j in 1:N) {
+    obs <- list()
+    for(i in 1:length(vars)) {
+      obs[[i]] <- x_det[,i] + rnorm(n,0,sigma)
     }
+    names(obs) <- vars
     
-    #print(paste0("NLS num:", is.numeric(NLSmc$im_pars_est), " SLS num:", is.numeric(SLSmc$im_pars_est), " num NLS:", length(NLSmc$im_pars_est), " num SLS:", length(SLSmc$im_pars_est)))
-
-    list(NLSmc=NLSmc,SLSmc=SLSmc,ptimeNLS=ptimeNLS,ptimeSLS=ptimeSLS)
-    #results[[j]] <- list(NLSmc=NLSmc,SLSmc=SLSmc,ptimeNLS=ptimeNLS,ptimeSLS=ptimeSLS)
+    nlin_init <- rnorm(length(theta[nlin_pars]),theta[nlin_pars],
+                       + priorInf[1]*abs(theta[nlin_pars]))
+    names(nlin_init) <- nlin_pars
+    lin_init <- rnorm(length(lin_pars),theta[lin_pars],priorInf[ip]*abs(theta[lin_pars]))
+    names(lin_init) <- lin_pars
+    init <- c(lin_init, nlin_init)
+    #names(init) <- pars
+    
+    ptimeNLS <- system.time({
+      NLSmc <- simode(equations=equations, pars=pars, time=time, obs=obs,
+                      fixed=x0, nlin=nlin_pars,
+                      lower=lower, upper=upper, start=init,
+                      im_method = "non-separable",
+                      simode_ctrl=simode.control(optim_type = "im"))})
+    
+    list(NLSmc=NLSmc,ptimeNLS=ptimeNLS)
   }
   
   
   NLSmc_im_loss_vals <- sapply(results,function(x) x$NLSmc$im_loss)
-  SLSmc_im_loss_vals <- sapply(results,function(x) x$SLSmc$im_loss)
+  SLSmc_im_loss_vals <- sapply(sls_results,function(x) x$SLSmc$im_loss)
   NLS_im_vars=sapply(results,function(x) x$NLSmc$im_pars_est)
-  SLS_im_vars=sapply(results,function(x) x$SLSmc$im_pars_est)
+  SLS_im_vars=sapply(sls_results,function(x) x$SLSmc$im_pars_est)
   NLSmc_time=list()
   SLSmc_time=list()
+  NLSmc_sse=list()
+  SLSmc_sse=list()
   for (mc in 1:N){
     NLSmc_time[mc]<-  results[[mc]]$ptimeNLS[3]
-    SLSmc_time[mc]<-  results[[mc]]$ptimeSLS[3]
+    SLSmc_time[mc]<-  sls_results[[mc]]$ptimeSLS[3]
   }
   #mean(unlist(NLSmc_im_loss_vals))
   #mean(unlist(SLSmc_im_loss_vals))
   #mean(unlist(NLSmc_time))
   #mean(unlist(SLSmc_time))
   
-  loss_df=data.frame(NLSmc=unlist(NLSmc_im_loss_vals),SLSmc=unlist(SLSmc_im_loss_vals),
-                     NLSest_gamma11=NLS_im_vars['gamma11',],NLSest_f121=NLS_im_vars['f121',],NLSest_f131=NLS_im_vars['f131',],
-                     NLSest_gamma12=NLS_im_vars['gamma12',],NLSest_f112=NLS_im_vars['f112',],NLSest_f122=NLS_im_vars['f122',],
-                     NLSest_gamma13=NLS_im_vars['gamma13',],NLSest_f113=NLS_im_vars['f113',],NLSest_f133=NLS_im_vars['f133',],
-                     NLSest_gamma21=NLS_im_vars['gamma21',],NLSest_f211=NLS_im_vars['f211',],NLSest_f221=NLS_im_vars['f221',],
-                     NLSest_gamma22=NLS_im_vars['gamma22',],NLSest_f222=NLS_im_vars['f222',],
-                     NLSest_gamma31=NLS_im_vars['gamma31',],NLSest_f311=NLS_im_vars['f311',],NLSest_f331=NLS_im_vars['f331',],
-                     NLSest_gamma32=NLS_im_vars['gamma32',],NLSest_f332=NLS_im_vars['f332',],
-                     SLSest_gamma11=SLS_im_vars['gamma11',],SLSest_f121=SLS_im_vars['f121',],SLSest_f131=SLS_im_vars['f131',],
-                     SLSest_gamma12=SLS_im_vars['gamma12',],SLSest_f112=SLS_im_vars['f112',],SLSest_f122=SLS_im_vars['f122',],
-                     SLSest_gamma13=SLS_im_vars['gamma13',],SLSest_f113=SLS_im_vars['f113',],SLSest_f133=SLS_im_vars['f133',],
-                     SLSest_gamma21=SLS_im_vars['gamma21',],SLSest_f211=SLS_im_vars['f211',],SLSest_f221=SLS_im_vars['f221',],
-                     SLSest_gamma22=SLS_im_vars['gamma22',],SLSest_f222=SLS_im_vars['f222',],
-                     SLSest_gamma31=SLS_im_vars['gamma31',],SLSest_f311=SLS_im_vars['f311',],SLSest_f331=SLS_im_vars['f331',],
-                     SLSest_gamma32=SLS_im_vars['gamma32',],SLSest_f332=SLS_im_vars['f332',]
+  
+  loss_df=data.frame(NLSest_alpha1=NLS_im_vars['alpha1',],NLSest_g11=NLS_im_vars['g11',],NLSest_g21=NLS_im_vars['g21',],
+                     NLSest_alpha2=NLS_im_vars['alpha2',],NLSest_g22=NLS_im_vars['g22',],
+                     NLSest_alpha3=NLS_im_vars['alpha3',],NLSest_g23=NLS_im_vars['g23',],NLSest_g33=NLS_im_vars['g33',],
+                     NLSest_alpha4=NLS_im_vars['alpha4',],NLSest_g34=NLS_im_vars['g34',],NLSest_g44=NLS_im_vars['g44',],
+                     NLSest_alpha5=NLS_im_vars['alpha5',],NLSest_g45=NLS_im_vars['g45',],NLSest_g55=NLS_im_vars['g55',],NLSest_g105=NLS_im_vars['g105',],
+                     NLSest_alpha6=NLS_im_vars['alpha6',],NLSest_g56=NLS_im_vars['g56',],NLSest_g66=NLS_im_vars['g66',],
+                     NLSest_alpha7=NLS_im_vars['alpha7',],NLSest_g67=NLS_im_vars['g67',],
+                     NLSest_alpha8=NLS_im_vars['alpha8',],NLSest_g38=NLS_im_vars['g38',],
+                     NLSest_alpha9=NLS_im_vars['alpha9',],NLSest_g49=NLS_im_vars['g49',],NLSest_g79=NLS_im_vars['g79',],
+                     NLSest_alpha10=NLS_im_vars['alpha10',],NLSest_g410=NLS_im_vars['g410',],
+                     NLSest_alpha11=NLS_im_vars['alpha11',],NLSest_g711=NLS_im_vars['g711',],NLSest_g811=NLS_im_vars['g811',],
+                     NLSest_alpha12=NLS_im_vars['alpha12',],NLSest_g712=NLS_im_vars['g712',],NLSest_g912=NLS_im_vars['g912',],
+                     NLSest_alpha13=NLS_im_vars['alpha13',],NLSest_g813=NLS_im_vars['g813',],NLSest_g1013=NLS_im_vars['g1013',],
+                     NLSest_alpha14=NLS_im_vars['alpha14',],NLSest_g914=NLS_im_vars['g914',],NLSest_g1014=NLS_im_vars['g1014',],
+                     NLSest_alpha15=NLS_im_vars['alpha15',],NLSest_g1015=NLS_im_vars['g1015',],NLSest_g1115=NLS_im_vars['g1115',],NLSest_g415=NLS_im_vars['g415',],
+                     NLSest_alpha16=NLS_im_vars['alpha16',],NLSest_g1116=NLS_im_vars['g1116',],NLSest_g1216=NLS_im_vars['g1216',],
+                     NLSest_alpha17=NLS_im_vars['alpha17',],NLSest_g1217=NLS_im_vars['g1217',],
+                     NLSest_alpha18=NLS_im_vars['alpha18',],NLSest_g918=NLS_im_vars['g918',],
+                     NLSest_alpha19=NLS_im_vars['alpha19',],NLSest_g1119=NLS_im_vars['g1119',],NLSest_g1319=NLS_im_vars['g1319',],
+                     NLSest_alpha20=NLS_im_vars['alpha20',],NLSest_g1220=NLS_im_vars['g1220',],NLSest_g1420=NLS_im_vars['g1420',],
+                     NLSest_alpha21=NLS_im_vars['alpha21',],NLSest_g1421=NLS_im_vars['g1421',],
+                     NLSest_alpha22=NLS_im_vars['alpha22',],NLSest_g1322=NLS_im_vars['g1322',],NLSest_g1522=NLS_im_vars['g1522',],
+                     NLSest_alpha23=NLS_im_vars['alpha23',],NLSest_g1423=NLS_im_vars['g1423',],NLSest_g1623=NLS_im_vars['g1623',],
+                     NLSest_alpha24=NLS_im_vars['alpha24',],NLSest_g1524=NLS_im_vars['g1524',],NLSest_g1624=NLS_im_vars['g1624',],
+                     NLSest_alpha25=NLS_im_vars['alpha25',],NLSest_g1625=NLS_im_vars['g1625',],
+                     NLSest_alpha26=NLS_im_vars['alpha26',],NLSest_g1026=NLS_im_vars['g1026',],NLSest_g1226=NLS_im_vars['g1226',],NLSest_g426=NLS_im_vars['g426',],
+                     SLSest_alpha1=SLS_im_vars['alpha1',],SLSest_g11=SLS_im_vars['g11',],SLSest_g21=SLS_im_vars['g21',],
+                     SLSest_alpha2=SLS_im_vars['alpha2',],SLSest_g22=SLS_im_vars['g22',],
+                     SLSest_alpha3=SLS_im_vars['alpha3',],SLSest_g23=SLS_im_vars['g23',],SLSest_g33=SLS_im_vars['g33',],
+                     SLSest_alpha4=SLS_im_vars['alpha4',],SLSest_g34=SLS_im_vars['g34',],SLSest_g44=SLS_im_vars['g44',],
+                     SLSest_alpha5=SLS_im_vars['alpha5',],SLSest_g45=SLS_im_vars['g45',],SLSest_g55=SLS_im_vars['g55',],SLSest_g105=SLS_im_vars['g105',],
+                     SLSest_alpha6=SLS_im_vars['alpha6',],SLSest_g56=SLS_im_vars['g56',],SLSest_g66=SLS_im_vars['g66',],
+                     SLSest_alpha7=SLS_im_vars['alpha7',],SLSest_g67=SLS_im_vars['g67',],
+                     SLSest_alpha8=SLS_im_vars['alpha8',],SLSest_g38=SLS_im_vars['g38',],
+                     SLSest_alpha9=SLS_im_vars['alpha9',],SLSest_g49=SLS_im_vars['g49',],SLSest_g79=SLS_im_vars['g79',],
+                     SLSest_alpha10=SLS_im_vars['alpha10',],SLSest_g410=SLS_im_vars['g410',],
+                     SLSest_alpha11=SLS_im_vars['alpha11',],SLSest_g711=SLS_im_vars['g711',],SLSest_g811=SLS_im_vars['g811',],
+                     SLSest_alpha12=SLS_im_vars['alpha12',],SLSest_g712=SLS_im_vars['g712',],SLSest_g912=SLS_im_vars['g912',],
+                     SLSest_alpha13=SLS_im_vars['alpha13',],SLSest_g813=SLS_im_vars['g813',],SLSest_g1013=SLS_im_vars['g1013',],
+                     SLSest_alpha14=SLS_im_vars['alpha14',],SLSest_g914=SLS_im_vars['g914',],SLSest_g1014=SLS_im_vars['g1014',],
+                     SLSest_alpha15=SLS_im_vars['alpha15',],SLSest_g1015=SLS_im_vars['g1015',],SLSest_g1115=SLS_im_vars['g1115',],SLSest_g415=SLS_im_vars['g415',],
+                     SLSest_alpha16=SLS_im_vars['alpha16',],SLSest_g1116=SLS_im_vars['g1116',],SLSest_g1216=SLS_im_vars['g1216',],
+                     SLSest_alpha17=SLS_im_vars['alpha17',],SLSest_g1217=SLS_im_vars['g1217',],
+                     SLSest_alpha18=SLS_im_vars['alpha18',],SLSest_g918=SLS_im_vars['g918',],
+                     SLSest_alpha19=SLS_im_vars['alpha19',],SLSest_g1119=SLS_im_vars['g1119',],SLSest_g1319=SLS_im_vars['g1319',],
+                     SLSest_alpha20=SLS_im_vars['alpha20',],SLSest_g1220=SLS_im_vars['g1220',],SLSest_g1420=SLS_im_vars['g1420',],
+                     SLSest_alpha21=SLS_im_vars['alpha21',],SLSest_g1421=SLS_im_vars['g1421',],
+                     SLSest_alpha22=SLS_im_vars['alpha22',],SLSest_g1322=SLS_im_vars['g1322',],SLSest_g1522=SLS_im_vars['g1522',],
+                     SLSest_alpha23=SLS_im_vars['alpha23',],SLSest_g1423=SLS_im_vars['g1423',],SLSest_g1623=SLS_im_vars['g1623',],
+                     SLSest_alpha24=SLS_im_vars['alpha24',],SLSest_g1524=SLS_im_vars['g1524',],SLSest_g1624=SLS_im_vars['g1624',],
+                     SLSest_alpha25=SLS_im_vars['alpha25',],SLSest_g1625=SLS_im_vars['g1625',],
+                     SLSest_alpha26=SLS_im_vars['alpha26',],SLSest_g1026=SLS_im_vars['g1026',],SLSest_g1226=SLS_im_vars['g1226',],SLSest_g426=SLS_im_vars['g426',]
   )  
   time_df=data.frame(NLStime=unlist(NLSmc_time),SLStime=unlist(SLSmc_time))
   write.csv(loss_df, file = paste0(ip, "-NLStoSLSloss.csv"))
   write.csv(time_df, file = paste0(ip, "-NLStoSLStime.csv"))
 }
 
-stopCluster(cl)
-#plot(unlist(NLSmc_im_loss_vals),type='l')
-#lines(unlist(SLSmc_im_loss_vals),col="red")
