@@ -33,4 +33,9 @@ All code is run under the `R` programming language. We have tested it using vers
  - simode
  - ggplot2 (for plots)
 
+The simulation code can take anywhere from a few minutes to several hours depending on the hardware setup and the experimental setup.
+
+The simulations were run with 16 cores `registerDoParallel(cores=16)`. Change this to reflect the number of cores on your system.
+
+
 
