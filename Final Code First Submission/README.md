@@ -7,6 +7,7 @@
 The code for each experiment is contained in a separate directory. The directory names reflect the setup of the experiment. The names are structured as an abbreviation of the model, such as FN for FitzHugh-Nagumo, then underscore "_", then number of samples, such as "n20", then signal-to-noise ratio such as "snr10".
 Within each folder is an `R` script for running the simulations and saving the results as comma-separated values (.csv), and a second script for reading the .csv files and producing the summary values and/or the plots.
 
+```
 FN_n20snr10
 FN_n20snr5
 FN_n40snr10
@@ -24,6 +25,7 @@ SIR_n18SNR10
 SIR_n18SNR5
 SIR_n36SNR10
 SIR_n36SNR5
+```
 
 ## How to run
 
