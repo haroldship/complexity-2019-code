@@ -6,7 +6,8 @@ d2 <- read.csv("2-NLStoSLSloss.csv")
 d3 <- read.csv("3-NLStoSLSloss.csv")
 
 pars <- c('a','b','c')
-theta <- c(0.2, 0.2, 3)
+#theta <- c(0.2, 0.2, 3)
+theta <- c(0.7, 0.8, 0.08)
 names(theta) <- pars
 lin_pars <- c('a', 'b')
 nlin_pars <- 'c'
